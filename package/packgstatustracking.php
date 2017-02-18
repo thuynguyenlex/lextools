@@ -234,6 +234,20 @@ if (empty($_SESSION["status"])){
 					$status = $_POST["status"];
 					$_SESSION["status"]=$status;
 				}
+				
+				if(Empty($_POST["fromhub"])){
+					$fromhubErr = " *From hub is required";
+				}else {
+					$fromhub = $_POST["fromhub"];
+					$_SESSION["fromhub"]=$fromhub;
+				}
+				
+				if(Empty($_POST["tohub"])){
+					$tohubErr = " *To hub is required";
+				}else {
+					$tohub = $_POST["tohub"];
+					$_SESSION["tohub"]=$tohub;
+				}
 			
 				//if (empty($_POST["generate"])) {
 					//if(len($transId))
@@ -245,28 +259,41 @@ if (empty($_SESSION["status"])){
 				//	$transId = strtotime(date_create(date("Y-m-d h:i:s A")) ->format("Ymdh:i:s"));
 					//$_SESSION["transId"]= strtotime(date_create(date("Y-m-d h:i:s A")) ->format("Ymdh:i:s"));
 				//}
-				$trans_id= $_SESSION["transId"];
-				$item =trim($_POST["item"]);
+				$trans_id= strtoupper($_SESSION["transId"]);
+				$item = strtoupper (trim($_POST["item"]));
 				$item_type = $option;
 				//$status=$_POST["status"];
 				$remark="";
-				$user ="thuy.nguyen@lazada.vn"; 
+				$user = getenv("username");//"thuy.nguyen@lazada.vn"; 
 				$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
+				
 				if($item==""){ 
-					echo "<script>beep();</script>";
-					//exit();	
+					echo "<script>beep(2);</script>";				
+											
 				}else{
-					$query ="Insert into item_status_tracking (trans_id,item,item_type,status,remark,user,created_at)
-					value ('$trans_id','$item','$item_type','$status','$remark','$user','$create_at');";
+					if((!preg_match('/[a-zA-Z]*[0-9\.\-]*/',$item))){
+						echo "<script>beep(2);</script>";
+						echo "<div id=myModal class='modal'>
+						<div class='modal-content'>
+						<div class='modal-header'>
+						<span class='close'>&times;</span>
+						<h2>$item</h2>
+						</div>
+						<div class='modal-body'>
+						<h3>Can't save for this item</h3>
+						<h3>Item is not correct format. Accept characters, number and - or_ </h3>
+						</div>
+						<div class='modal-footer'>
+						</div>
+						</div>
+						</div>";
+					}else {
+					$query ="Insert into item_status_tracking (trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at)
+					value ('$trans_id','$item','$item_type','$status', '$fromhub','$tohub','$remark','$user','$create_at');";
 					$res = $mysqli->query($query);
 					echo "<br/> Query: " .$res;
 					if($res == ""){
 						echo "<script>beep(2);</script>";
-						//echo "<script>alert('Can not save item because of duplicated: $item');</script>";
-						//echo "<div class= 'alert warning'>
-						//<span class='closebtn'>&times;</span>
-						//<strong>Warning!</strong> Indicates a warning that might need attention.
-						//</div>";
 						echo "<div id=myModal class='modal'>							
 								<div class='modal-content'>
 							    <div class='modal-header'>
@@ -274,9 +301,9 @@ if (empty($_SESSION["status"])){
 							      <h2>$item</h2>
 							    </div>
 							    <div class='modal-body'>
-							      <p>Can't save for this item</p>
-							      <p>Item is existed in this transit $trans_id already!(checking by yourself) </p>
-							      <p>Or have a problem while Inserting to database (reporting to PMP team)</p>
+							      <h3>Can't save for this item</h3>
+							      <h3>Item is existed in this transit $trans_id already! (checking by yourself) </h3>
+							      <h3>Or have a problem while Inserting to database (reporting to PMP team)</h3>
 							    </div>
 							    <div class='modal-footer'>							     
 							    </div>
@@ -287,25 +314,31 @@ if (empty($_SESSION["status"])){
 						echo "<script>beep(1);</script>";
 						echo "Saved: $item";
 					}
+					}
 				}
 				//if($item_type==""){ Print '<script>alert("Please select an option item type");</script>'; }
 				//if($status==""){ Print '<script>alert("Please select a status");</script>'; }
 				//if($trans_id==""){ Print '<script>alert("Please input transit id");</script>'; }
-				
-				
-				
+		
 				
 			}
 			if ($_SERVER["REQUEST_METHOD"] == "GET") {
 				print_r($_SESSION);
+				//echo "<br/>Get: " .$_GET["transId"] ." Session: " .$_SESSION["transId"];			
 				if (empty($_GET["generate"])) {
 					echo "</br> TransitID test: " .$_SESSION["transId"];
 				} else {					
-					$_SESSION["transId"]= strtotime(date_create(date("Y-m-d h:i:s A")) ->format("Y-m-d h:i:s A"));
-					echo "</br> TransitID : " .$_SESSION["transId"];
+					if(isset($_GET["transId"]) and $_GET["generate"]="Generate" and ($_GET["transId"]<>$_SESSION["transId"])){
+						$_SESSION["transId"]=$_GET["transId"];
+						$trans_id_filter = $_SESSION["transId"];
+					}else {
+						$_SESSION["transId"]= strtotime(date_create(date("Y-m-d h:i:s A")) ->format("Y-m-d h:i:s A"));
+						echo "</br> TransitID : " .$_SESSION["transId"];
+					}			
 				}
-				echo "GET item type: " .$_SESSION["option"];
-				echo "GET Status: " .$_SESSION["status"];
+				//echo "<br/>Get: " .$_GET["transId"] ." Session: " .$_SESSION["transId"];
+				echo " GET item type: " .$_SESSION["option"];
+				echo " GET Status: " .$_SESSION["status"];				
 				
 				//DELETE:
 				if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="delete"){
@@ -326,6 +359,8 @@ if (empty($_SESSION["status"])){
 						echo "Delete: $item_del trans_id: $transId_del";
 					}
 				}
+			
+				
 			}
 				
 			function test_input($data) {
@@ -338,9 +373,7 @@ if (empty($_SESSION["status"])){
 		?>
         <h2 style="color:#DF7401;">PACKAGE STATUS TRACKING</h2>
         <p align="right"><a href="index.php">Click here to go home</a></p>
-        <br/>
-        <p id="demo">Sound Type: </p>
-         <br/> 	
+        <br/> 	
 	    <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >
 	       	Transit Id: <input type="text" name="transId" class="transid" value="<?php echo $_SESSION["transId"];?>"> 
 	    	<input type="submit" name="generate" value="Generate">
@@ -355,9 +388,8 @@ if (empty($_SESSION["status"])){
 			<input type="radio" name="option"<?php if (isset($option) && $option=="tracking") echo "checked";?> value="tracking">Tracking Number
 			<input type="radio" name="option"<?php if (isset($option) && $option=="runsheet") echo "checked";?> value="runsheet">Runsheet
 			 -->
-			 <br/>
-			 ITEM TYPE:
-			 <br/>
+			
+			 Item Type:
 			<?php 
 				$option = $_SESSION["option"];
 				if(empty ($option)){
@@ -399,7 +431,7 @@ if (empty($_SESSION["status"])){
 			}
 			*/
 				
-			$res = $mysqli->query("Select value from lex_bi.tbp_parameter where program='lextools' and function ='packgstatustracking' order by value;");
+			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='packgstatustracking' and keyfunc='SatusOpts' order by value;");
 			
 			echo "<select name='status'>";		
 			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
@@ -413,6 +445,64 @@ if (empty($_SESSION["status"])){
 					}else{
 						echo "<option value='$row[value]'>$row[value]</option>";
 					}
+			}
+			//echo "<option value='audi' selected>Audi</option>;";
+			echo "</select>";
+			
+		
+			echo "<br/>From Hub: ";
+			//<form action="post" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);">" >
+			//mysql_connect("127.0.0.1", "root", "") or die("Can't connect to server" .mysql_error());
+			//mysql_select_db("lex_bi") or die("Can't connect to server" .mysql_error());
+				
+			/*$mysqli = new mysqli("127.0.0.1", "root", "", "lex_bi");
+			 if ($mysqli->connect_errno) {
+			 echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+			}
+			*/
+			
+			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' and keyfunc='fromhub' order by value;");
+				
+			echo "<select name='fromhub'>";
+			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
+				echo "value";
+				$res->data_seek($row_no);
+				$row = $res->fetch_assoc();
+				//echo " id = " . $row['id'] . "\n";
+				//echo "<option value='$row[value]'>$row[value]</option>";
+				if(isset($_SESSION["fromhub"]) &&  $_SESSION["fromhub"] == $row[value]){
+					echo "<option value='$row[value]' selected>$row[value]</option>";
+				}else{
+					echo "<option value='$row[value]'>$row[value]</option>";
+				}
+			}
+			//echo "<option value='audi' selected>Audi</option>;";
+			echo "</select>";
+			echo "	To Hub: ";
+			//<form action="post" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);">" >
+			//mysql_connect("127.0.0.1", "root", "") or die("Can't connect to server" .mysql_error());
+			//mysql_select_db("lex_bi") or die("Can't connect to server" .mysql_error());
+			
+			/*$mysqli = new mysqli("127.0.0.1", "root", "", "lex_bi");
+			 if ($mysqli->connect_errno) {
+			 echo "Failed to connect to MySQL: (" . $mysqli->connect_errno . ") " . $mysqli->connect_error;
+			 }
+			 */
+				
+			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' and keyfunc='tohub' order by value;");
+			
+			echo "<select name='tohub'>";
+			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
+				echo "value";
+				$res->data_seek($row_no);
+				$row = $res->fetch_assoc();
+				//echo " id = " . $row['id'] . "\n";
+				//echo "<option value='$row[value]'>$row[value]</option>";
+				if(isset($_SESSION["tohub"]) &&  $_SESSION["tohub"] == $row[value]){
+					echo "<option value='$row[value]' selected>$row[value]</option>";
+				}else{
+					echo "<option value='$row[value]'>$row[value]</option>";
+				}
 			}
 			//echo "<option value='audi' selected>Audi</option>;";
 			echo "</select>";
@@ -433,18 +523,19 @@ if (empty($_SESSION["status"])){
 			
 			<br/>
 		 
-        </form>
-        
+        </form>        
         <div>
         <table cellspacing="0" cellpadding="3" rules="cols" id="gvwcategory" class="table-display">
         	<tbody>
         		<tr class="table-header">
                    <!--<th scope="col" class="cbxSelectAll"> <input id="cbxSelectAll" type="checkbox" name="cbxSelectAll"> </th>-->
-                        <th scope="col"><a id="sort-name" href="#" onclick="return sort(this.id, this.textContent)">Nb</a></th>
-                             <th scope="col" style="width:150px;"><a id="sort-id" href="#" onclick="return sort(this.id, this.textContent)">Item</a></th>
-                                    <th scope="col"><a id="sort-name" href="#" onclick="return sort(this.id, this.textContent)">Item Type</a></th>
-                                    <th scope="col"><a id="sort-name" href="#" onclick="return sort(this.id, this.textContent)">Status</a></th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Transit ID</th>
+                        <th scope="col">Nb</th>
+                             <th scope="col" style="width:150px;">Item</th>
+                                    <th scope="col">Item Type</th>
+                                    <th scope="col"><a>Status</a></th>
+                                    <th scope="col">Transit ID</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>From Hub</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>To Hub</th>
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Remark</th>
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User</th>
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Created At</th>
@@ -461,30 +552,31 @@ if (empty($_SESSION["status"])){
                                  --> 
                             <?php 
                             $trans_id_filter = $_SESSION["transId"] ;
-                         	$sql="Select trans_id,item,item_type,status,remark,user,created_at from item_status_tracking 
+                         	$sql="Select trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at from item_status_tracking 
 									where trans_id ='$trans_id_filter' order by created_at" ;
                          	//echo $sql;
 							$res = $mysqli->query($sql);							
 							if($res->num_rows >0){
 								for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
-									//$row = $row_no +1;
+									$rownb = (string)($row_no +1);
 									$res->data_seek($row_no);
 									$row = $res->fetch_assoc();
 									//echo " id = " . $row['id'] . "\n";
 									//echo "<option value='$row[value]'>$row[value]</option>";
 									echo "<tr class=table-row-one>";
 									//echo "<td><span class='cbxSelectOn'><input value='' type='checkbox' name=cbxSelectOne[]></span></td>";
-									echo "<td><span class=table-row-primary> $row_no </span></td>";
+									echo "<td><span class=table-row-primary> $rownb </span></td>";
 									echo "<td>$row[item]</td>";
 									echo "<td>$row[item_type]</td>";
 									echo "<td>$row[status]</td>";
 									echo "<td>$row[trans_id]</td>";
+									echo "<td>$row[fromhub]</td>";
+									echo "<td>$row[tohub]</td>";
 									echo "<td>$row[remark]</td>";
 									echo "<td>$row[user]</td>";
 									echo "<td>$row[created_at]</td>";
-									echo "<td><a href=?item=$row[item]&&transId=$row[trans_id]&&itemType=$row[item_type]>Edit</a> <a href=?action=Delete&&item=$row[item]&&transId=$row[trans_id]&&itemType=$row[item_type]>Delete</a></td>";
-									echo "</tr>";
-										
+									echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[trans_id]&&itemType=$row[item_type]>Delete</a></td>";
+									echo "</tr>";										
 								}
 							}									
 							
