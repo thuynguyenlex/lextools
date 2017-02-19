@@ -431,7 +431,7 @@ if (empty($_SESSION["status"])){
 			}
 			*/
 				
-			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='packgstatustracking' and keyfunc='SatusOpts' order by value;");
+			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='packgstatustracking' and keyfunc='SatusOpts' and value <>'ALL' order by value desc;");
 			
 			echo "<select name='status'>";		
 			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
@@ -461,7 +461,7 @@ if (empty($_SESSION["status"])){
 			}
 			*/
 			
-			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' and keyfunc='fromhub' order by value;");
+			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' and keyfunc='hub' order by value desc;");
 				
 			echo "<select name='fromhub'>";
 			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
@@ -489,7 +489,7 @@ if (empty($_SESSION["status"])){
 			 }
 			 */
 				
-			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' and keyfunc='tohub' order by value;");
+			//$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' and keyfunc='hub' order by value;");
 			
 			echo "<select name='tohub'>";
 			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {

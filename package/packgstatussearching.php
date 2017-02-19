@@ -177,9 +177,10 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 	</style>
 
 	<script type="text/javascript">	
+	 	//$(".form_datetime").datetimepicker({format: 'yyyy-mm-dd hh:ii'});
   		$( function() {
 		    $( "#upfromdate").datepicker();
-		    $( "#uptodate").datepicker();
+		    $( "#uptodate").datepicker({format: 'yyyy-mm-dd hh:ii'});
 	  	} );	
 			$(document).ready(function(){			
 				
@@ -200,7 +201,14 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
     	   <?php
 			$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status ="";
 			echo "<br/> 1.Session check1: ";
-		
+			if(strlen(trim($fromdate))==0){
+				$fromdate=date("d-m-Y");
+			}
+			if(strlen(trim($todate))==0){
+				$todate=date("d-m-Y");
+			}
+			
+				
 			if ($_SERVER["REQUEST_METHOD"] == "POST") {								
 				if(Empty($_POST["item"])){
 					$item="";
@@ -264,12 +272,12 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 			From Date:  <input type="text" id="upfromdate" name="fromdate" value="<?php echo $fromdate;?>"> 
 			To Date:  <input type="text" id="uptodate" name="todate" value="<?php echo $todate;?>"> <br/>           	
 			Transit Id: <input type="text" name="transid" class="transid" value="<?php echo $transId;?>"> 
-			ITEM:  <input type="text" name="item" class="item"/> 
+			ITEM:  <input type="text" name="item" class="item" value="<?php echo $item;?>"/> 
 			<input type="submit" name="btsearch" value="Search">
 			<input type="submit" name="btcsv" value="CSV"><br/>
 			Status: 
 			<?php 							
-				$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='packgstatustracking' and keyfunc='SatusOpts' order by value;");
+				$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='packgstatustracking' and keyfunc='SatusOpts' order by value desc;");
 				echo "<select name='status'>";		
 				for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
 						$res->data_seek($row_no);
@@ -329,16 +337,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User</th>
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Created At</th>
                                     <th scope="col">Action</th>                                    
-                                 <!--                            
-                                 <tr class="table-search-one">
-                                    <th></th>
-                                    <th scope="col"><input placeholder="Search by Id" type="text" onchange="return search(this.value, this.id);" id="search_id" value="" /></th>
-                                    <th scope="col"><input placeholder="Search by Name" type="text" onchange="return search(this.value, this.id);" id="search_name" value="" /></th>
-                                    <th scope="col"><input placeholder="Search by Url" type="text" onchange="return search(this.value, this.id);" id="search_url" value="" /></th>
-                                    <th scope="col"><input placeholder="Search by Url" type="text" onchange="return search(this.value, this.id);" id="search_url" value="" /></th>
-                                    <th></th>
-                                 </tr>
-                                 --> 
+                            
                             <?php 
                             
                             if(strlen(trim($transId)) == 0){
@@ -352,8 +351,37 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
                             }else{
                             	$item_filter =$item;
                             }
+                            if(strlen(trim($fromdate)) == 0){
+                            	$fromdate_filter = date("Y-m-d 00:00:00");;
+                            }else{
+                            	//$fromdate_filter =$fromdate;
+                            	$fromdate_filter = date("Y-m-d 00:00:00", strtotime($fromdate));
+                            }
+                            if(strlen(trim($todate)) == 0){
+                            	$todate_filter =date("Y-m-d 00:00:00");
+                            }else{
+                            	$todate_filter =date("Y-m-d 00:00:00", strtotime($todate));
+                            }
+                            if(trim($status)=='ALL' or trim($status)==''){
+                            	$status_filter ="%";
+                            }else{
+                            	$status_filter = $status;
+                            }
+                            if(trim($fromhub)=='ALL' or trim($fromhub)==''){
+                            	$frmhub_filter ="%";
+                            }else{
+                            	$frmhub_filter = $fromhub;
+                            }
+                            if(trim($tohub)=='ALL' or trim($tohub)==''){
+                            	$tohub_filter ="%";
+                            }else{
+                            	$tohub_filter = $tohub;
+                            }
+                            
                          	$sql="Select trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at from item_status_tracking 
-									where trans_id like '$trans_id_filter' and item like '$item_filter' order by created_at" ;
+									where trans_id like '$trans_id_filter' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter' 
+                         			and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
+                         			order by created_at,item" ;
                          	echo "<br/>".$sql;
 							$res = $mysqli->query($sql);							
 							if($res->num_rows >0){
@@ -383,6 +411,10 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
              </tbody>
        </table>
        </div>
+       <div class="pagination"> 
+           <?php 
+           ?>
+        </div>
 			
 	</body> 
 </html>
