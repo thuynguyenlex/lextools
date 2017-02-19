@@ -3,6 +3,133 @@ include "../dao/dao_conn_mysql_lex_bi.php";
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 ?>
+ <?php
+			$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status =$exp_csv ="";	
+						
+			if(strlen(trim($fromdate))==0){
+				$fromdate=date("d-m-Y");
+			}
+			if(strlen(trim($todate))==0){
+				$todate=date("d-m-Y");
+			}
+			
+				
+			if ($_SERVER["REQUEST_METHOD"] == "POST") {								
+				if(Empty($_POST["item"])){
+					$item="";
+				}else {
+					$item= test_input($_POST["item"]);
+				}
+				if(Empty($_POST["transid"])){
+					$transId ="";
+				}else {
+					$transId = test_input($_POST["transid"]);
+				}
+						
+				if(Empty($_POST["status"])){
+					$status = "";
+				}else {
+					$status = test_input($_POST["status"]);				
+				}
+				
+				if(Empty($_POST["fromhub"])){
+					$fromhub = "";
+				}else {
+					$fromhub = test_input($_POST["fromhub"]);					
+				}
+				
+				if(Empty($_POST["tohub"])){
+					$tohub = "";
+				}else {
+					$tohub = test_input($_POST["tohub"]);				
+				}
+				if(Empty($_POST["fromdate"])){
+					$fromdate="";
+				}else {
+					$fromdate=$_POST["fromdate"];
+				}
+				if(Empty($_POST["todate"])){
+					$todate="";
+				}else {
+					$todate=$_POST["todate"];
+				}
+				//Export downloadable CSV file:
+				if(Empty($_POST["btcsv"])){
+					$expcsv = "no";
+				}else {
+					$expcsv = "yes";
+					if(strlen(trim($transId)) == 0){
+						$trans_id_filter ='%';
+					}else{
+						$trans_id_filter = $transId;
+					}
+						
+					if(strlen(trim($item)) == 0){
+						$item_filter ='%';
+					}else{
+						$item_filter =$item;
+					}
+					if(strlen(trim($fromdate)) == 0){
+						$fromdate_filter = date("Y-m-d 00:00:00");;
+					}else{
+						//$fromdate_filter =$fromdate;
+						$fromdate_filter = date("Y-m-d 00:00:00", strtotime($fromdate));
+					}
+					if(strlen(trim($todate)) == 0){
+						$todate_filter =date("Y-m-d 23:59:59");
+					}else{
+						$todate_filter =date("Y-m-d 23:59:59", strtotime($todate));
+					}
+					if(trim($status)=='ALL' or trim($status)==''){
+						$status_filter ="%";
+					}else{
+						$status_filter = $status;
+					}
+					if(trim($fromhub)=='ALL' or trim($fromhub)==''){
+						$frmhub_filter ="%";
+					}else{
+						$frmhub_filter = $fromhub;
+					}
+					if(trim($tohub)=='ALL' or trim($tohub)==''){
+						$tohub_filter ="%";
+					}else{
+						$tohub_filter = $tohub;
+					}
+						
+					$sql="Select item,item_type,status,trans_id,fromhub,tohub,remark,user,created_at from item_status_tracking
+					where trans_id like '$trans_id_filter' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter'
+					and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
+					order by created_at,item" ;				
+					$res = $mysqli->query($sql);				
+					// output headers so that the file is downloaded rather than displayed
+					header('Content-Type: text/csv; charset=utf-8');
+					header('Content-Disposition: attachment; filename=data.csv');
+					// create a file pointer connected to the output stream
+					$output = fopen('php://output', 'w');
+					// output the column headingsc
+					fputcsv($output, array('Item', 'Item Type','Status','Transit Id','From Hub','To Hub','Remark','User','Created At'));
+					// fetch the data
+					// loop over the rows, outputting them
+					while ($row = $res->fetch_assoc()) fputcsv($output, $row);
+					exit();
+				}
+				//echo "<br/>item: " .$item;
+				//echo "<br/>transit id: " .$transId;
+				//echo "<br/>from date: " .$fromdate;
+				//echo "<br/>to date: ".$todate;
+				//echo "<br/>from hub: ".$fromhub;
+				//echo "<br/>to hub: ".$tohub;
+				//echo "<br/>export: ".$expcsv;			
+				
+			}			
+			function test_input($data) {
+				$data = trim($data);
+				$data = stripslashes($data);
+				$data = htmlspecialchars($data);
+				return $data;
+			}
+			
+		?>
 <!DOCTYPE HTML>
 <html>
     <head>
@@ -17,32 +144,53 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 		  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 		  <style>
 		body {
-			font-size: 80%;
+			font-size: 12px;
 			font-family: Verdana;
 			background-color:#fdfdfd;
 		}
 		input[type=text], select{
-			width:20%;
-			padding:10px 18px;
-			margin: 8px 0;
+			width: 20%;
+			padding:6px 18px;
+			margin: 3px 0;
+			margin-left: 10px;
 			display: inline-block;
 			border: 1px solid #CED8F6;
 			border-radius: 4px;
 			box-sizing: border-box;
 		}
+		.txttransid{
+			width: 17%;
+			background-color: #f2f2f2;
+			margin-left: 270px;
+		}
+		.txtdate{
+			width: 200px;
+			background-color: #f5f5f5;
+		}
+		.comboxhub{
+			width: 20%;
+			background-color: #f2f2f2;
+		}
+		.combostatus{
+			margin-left: 23px;
+		}
+		.item{
+			margin-left: 27px;
+		}
 
 		table {
 			border-collapse: collapse;
-			width: 80%;
+			width: 98%;
 			background-color: #EFEFFB;
 			border-radius: 4px;
+			font-size: 95%;
 		}
 
 		th, td {
 			padding: 6px;
 			text-align: left;
 			border: 1px solid #CED8F6;
-			border-radius: 4px;
+			border-radius: 2px;
 		}
 
 		tr:hover{background-color:#FAAC58}
@@ -52,8 +200,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 		    color: white;
 		}
 		
-		
-		
+
 		input[type=checkbox]
 		{
 		  /* Double-sized Checkboxes */
@@ -63,16 +210,51 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 		  -o-transform: scale(1.5); /* Opera */
 		  padding: 0px;
 		  color: green;
+		  margin-left: 5px;
 		}
 
 		/* Might want to wrap a span around your checkbox text */
 		.checkboxtext
 		{
 		  /* Checkbox text */
-		  font-size: 100%;
-		  display: inline;		  
+		  font-size: 20px;
+		  display: inline;		  		  
 		}
 		
+		input[type=radio]
+		{
+		  /* Double-sized Checkboxes */
+		  -ms-transform: scale(1.5); /* IE */
+		  -moz-transform: scale(1.5); /* FF */
+		  -webkit-transform: scale(1.5); /* Safari and Chrome */
+		  -o-transform: scale(1.5); /* Opera */
+		  padding: 0px;
+		  color: green;
+		  margin-left: 5px;
+		  
+		}
+
+		/* Might want to wrap a span around your checkbox text */
+	
+		.button {
+		    background-color: #4CAF50; /* Green */#ff8000
+		    border: none;
+		    color: white;
+		    padding: 6px 13px;
+		    text-align: center;
+		    text-decoration: none;
+		    display: inline-block;
+		    font-size: 14px;
+		    border: 1px solid #CED8F6;
+			border-radius: 4px;
+			width: 90px;
+			margin-left: 3px;
+		}
+		.button:hover {
+		    background-color: #ff8000;
+		    color: white;
+		}
+			
 		/*Alert Message*/
 		.alert {
 	    padding: 20px;
@@ -182,8 +364,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 		    $( "#upfromdate").datepicker();
 		    $( "#uptodate").datepicker({format: 'yyyy-mm-dd hh:ii'});
 	  	} );	
-			$(document).ready(function(){			
-				
+			$(document).ready(function(){
 			  	$('.item').focus();
 			  	$('input').keypress(function(event) {
 					var keycode = (event.keyCode ? event.keyCode : event.which);
@@ -198,101 +379,27 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
     </head>
 
     <body>
-    	   <?php
-			$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status ="";
-			echo "<br/> 1.Session check1: ";
-			if(strlen(trim($fromdate))==0){
-				$fromdate=date("d-m-Y");
-			}
-			if(strlen(trim($todate))==0){
-				$todate=date("d-m-Y");
-			}
-			
-				
-			if ($_SERVER["REQUEST_METHOD"] == "POST") {								
-				if(Empty($_POST["item"])){
-					$item="";
-				}else {
-					$item= test_input($_POST["item"]);
-				}
-				if(Empty($_POST["transid"])){
-					$transId ="";
-				}else {
-					$transId = test_input($_POST["transid"]);
-				}
-						
-				if(Empty($_POST["status"])){
-					$status = "";
-				}else {
-					$status = test_input($_POST["status"]);				
-				}
-				
-				if(Empty($_POST["fromhub"])){
-					$fromhub = "";
-				}else {
-					$fromhub = test_input($_POST["fromhub"]);					
-				}
-				
-				if(Empty($_POST["tohub"])){
-					$tohub = "";
-				}else {
-					$tohub = test_input($_POST["tohub"]);				
-				}
-				if(Empty($_POST["fromdate"])){
-					$fromdate="";
-				}else {
-					$fromdate=$_POST["fromdate"];
-				}
-				if(Empty($_POST["todate"])){
-					$todate="";
-				}else {
-					$todate=$_POST["todate"];
-				}
-				echo "<br/>item: " .$item;
-				echo "<br/>transit id: " .$transId;
-				echo "<br/>from date: " .$fromdate;
-				echo "<br/>to date: ".$todate;
-				echo "<br/>from hub: ".$fromhub;
-				echo "<br/>to hub: ".$tohub;		
-			}			
-			function test_input($data) {
-				$data = trim($data);
-				$data = stripslashes($data);
-				$data = htmlspecialchars($data);
-				return $data;
-			}
-			
-		?>
+    	  
        
         <h2 style="color:#DF7401;">PACKAGE STATUS SEARCHING</h2>
-        <p align="right"><a href="index.php">Click here to go home</a></p>
-        <br/> 	
+         <p align="right"><a href="index.php">Home</a></p>     
 	   
          <form method="POST" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
-			From Date:  <input type="text" id="upfromdate" name="fromdate" value="<?php echo $fromdate;?>"> 
-			To Date:  <input type="text" id="uptodate" name="todate" value="<?php echo $todate;?>"> <br/>           	
-			Transit Id: <input type="text" name="transid" class="transid" value="<?php echo $transId;?>"> 
-			ITEM:  <input type="text" name="item" class="item" value="<?php echo $item;?>"/> 
-			<input type="submit" name="btsearch" value="Search">
-			<input type="submit" name="btcsv" value="CSV"><br/>
-			Status: 
-			<?php 							
-				$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='packgstatustracking' and keyfunc='SatusOpts' order by value desc;");
-				echo "<select name='status'>";		
-				for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
-						$res->data_seek($row_no);
-						$row = $res->fetch_assoc();					
-						if(isset($status) &&  $status == $row[value]){
-							echo "<option value='$row[value]' selected>$row[value]</option>";
-						}else{
-							echo "<option value='$row[value]'>$row[value]</option>";
-						}
-				}
-				echo "</select>";
+			From Date:  <input type="text" id="upfromdate" name="fromdate" class="txtdate" value="<?php echo $fromdate;?>"> 
+			To Date:  <input type="text" id="uptodate" name="todate" class="txtdate" value="<?php echo $todate;?>">           	
+			<input type="submit" name="btsearch" value="Search" class="button"><br/> 
+			Transit Id: <a style="margin-left:7px; "></a>
+			<input type="text" name="transid" class="transid" class="txttransid" value="<?php echo $transId;?>"> 
+			Item:  <a style="margin-left:16px; "></a>
+			<input type="text" name="item" class="item" value="<?php echo $item;?>"/> 
 			
-				echo "<br/>From Hub: ";
+			<input type="submit" name="btcsv" value="CSV" class="button"><br/>
+			
+			<?php 		
+			
+				echo "	From Hub: <a style='margin-left:3px; '></a>";
 				$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' and keyfunc='hub' order by value desc;");
-				echo "<select name='fromhub'>";
+				echo "<select name='fromhub' class='comboxhub'>";
 				for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {				
 					$res->data_seek($row_no);
 					$row = $res->fetch_assoc();
@@ -304,9 +411,9 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 				}			
 				echo "</select>";
 				
-				echo "	To Hub: ";					
+				echo "	To Hub: <a style='margin-left:5px; '></a>";					
 				//$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' and keyfunc='tohub' order by value;");			
-				echo "<select name='tohub'>";
+				echo "<select name='tohub' class='comboxhub'>";
 				for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
 					$res->data_seek($row_no);
 					$row = $res->fetch_assoc();
@@ -316,9 +423,22 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 						echo "<option value='$row[value]'>$row[value]</option>";
 					}
 				}
-				echo "</select>";	
+				echo "</select>";
+				echo "<br/>Status: <a style='margin-left:10px; '></a>";
+				$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='packgstatustracking' and keyfunc='SatusOpts' order by value desc;");
+				echo "<select name='status'  class='combostatus'>";
+				for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
+					$res->data_seek($row_no);
+					$row = $res->fetch_assoc();
+					if(isset($status) &&  $status == $row[value]){
+						echo "<option value='$row[value]' selected>$row[value]</option>";
+					}else{
+						echo "<option value='$row[value]'>$row[value]</option>";
+					}
+				}
+				echo "</select>";
 			?>			
-			<br/>	
+			<br/><br/>	
 			 
     	</form>          
         <div>        
@@ -336,7 +456,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Remark</th>
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User</th>
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Created At</th>
-                                    <th scope="col">Action</th>                                    
+                                   <!-- <th scope="col">Action</th>    -->                                  
                             
                             <?php 
                             
@@ -358,9 +478,9 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
                             	$fromdate_filter = date("Y-m-d 00:00:00", strtotime($fromdate));
                             }
                             if(strlen(trim($todate)) == 0){
-                            	$todate_filter =date("Y-m-d 00:00:00");
+                            	$todate_filter =date("Y-m-d 23:59:59");
                             }else{
-                            	$todate_filter =date("Y-m-d 00:00:00", strtotime($todate));
+                            	$todate_filter =date("Y-m-d 23:59:59", strtotime($todate));
                             }
                             if(trim($status)=='ALL' or trim($status)==''){
                             	$status_filter ="%";
@@ -382,39 +502,38 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 									where trans_id like '$trans_id_filter' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter' 
                          			and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
                          			order by created_at,item" ;
-                         	echo "<br/>".$sql;
-							$res = $mysqli->query($sql);							
-							if($res->num_rows >0){
-								for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
-									$rownb = (string)($row_no +1);
-									$res->data_seek($row_no);
-									$row = $res->fetch_assoc();
-									
-									echo "<tr class=table-row-one>";
-									echo "<td><span class=table-row-primary> $rownb </span></td>";
-									echo "<td>$row[item]</td>";
-									echo "<td>$row[item_type]</td>";
-									echo "<td>$row[status]</td>";
-									echo "<td>$row[trans_id]</td>";
-									echo "<td>$row[fromhub]</td>";
-									echo "<td>$row[tohub]</td>";
-									echo "<td>$row[remark]</td>";
-									echo "<td>$row[user]</td>";
-									echo "<td>$row[created_at]</td>";
-									echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[trans_id]&&itemType=$row[item_type]>Delete</a></td>";
-									echo "</tr>";										
-								}
-							}									
+                         	//echo "<br/>".$sql;
+							$res = $mysqli->query($sql);
+							//echo "<br/> Data search ************************";												
+								if($res->num_rows >0){
+									//echo "<br/> View Table:************************";
+									for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
+										$rownb = (string)($row_no +1);
+										$res->data_seek($row_no);
+										$row = $res->fetch_assoc();
+										
+										echo "<tr class=table-row-one>";
+										echo "<td><span class=table-row-primary> $rownb </span></td>";
+										echo "<td>$row[item]</td>";
+										echo "<td>$row[item_type]</td>";
+										echo "<td>$row[status]</td>";
+										echo "<td>$row[trans_id]</td>";
+										echo "<td>$row[fromhub]</td>";
+										echo "<td>$row[tohub]</td>";
+										echo "<td>$row[remark]</td>";
+										echo "<td>$row[user]</td>";
+										echo "<td>$row[created_at]</td>";
+										//echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[trans_id]&&itemType=$row[item_type]>Delete</a></td>";
+										echo "</tr>";										
+									}
+								}							
 							
                             ?>                              
                                
              </tbody>
        </table>
        </div>
-       <div class="pagination"> 
-           <?php 
-           ?>
-        </div>
+      
 			
 	</body> 
 </html>
