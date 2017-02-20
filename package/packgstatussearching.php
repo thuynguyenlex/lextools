@@ -150,7 +150,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 		}
 		input[type=text], select{
 			width: 20%;
-			padding:6px 18px;
+			padding:5px 18px;
 			margin: 3px 0;
 			margin-left: 10px;
 			display: inline-block;
@@ -240,7 +240,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 		    background-color: #4CAF50; /* Green */#ff8000
 		    border: none;
 		    color: white;
-		    padding: 6px 13px;
+		    padding: 5px 13px;
 		    text-align: center;
 		    text-decoration: none;
 		    display: inline-block;
@@ -499,7 +499,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
                             }
                             
                          	$sql="Select trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at from item_status_tracking 
-									where trans_id like '$trans_id_filter' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter' 
+									where trans_id like '%$trans_id_filter%' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter' 
                          			and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
                          			order by created_at,item" ;
                          	//echo "<br/>".$sql;
@@ -510,8 +510,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 									for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
 										$rownb = (string)($row_no +1);
 										$res->data_seek($row_no);
-										$row = $res->fetch_assoc();
-										
+										$row = $res->fetch_assoc();										
 										echo "<tr class=table-row-one>";
 										echo "<td><span class=table-row-primary> $rownb </span></td>";
 										echo "<td>$row[item]</td>";

@@ -57,7 +57,7 @@ if (empty($_SESSION["status"])){
 			background-color:#fdfdfd;
 		}
 		input[type=text], select{
-			width: 25%;
+			width: 20%;
 			padding:6px 18px;
 			margin: 3px 0;
 			margin-left: 10px;
@@ -384,7 +384,7 @@ if (empty($_SESSION["status"])){
 						$_SESSION["transId"]=$_GET["transId"];
 						$trans_id_filter = $_SESSION["transId"];
 					}else {
-						$_SESSION["transId"]= strtotime(date_create(date("Y-m-d h:i:s A")) ->format("Y-m-d h:i:s A"));
+						$_SESSION["transId"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");
 						//echo "</br> TransitID : " .$_SESSION["transId"];
 					}			
 				}
@@ -396,17 +396,17 @@ if (empty($_SESSION["status"])){
 					$transId_del=$_GET["transId"];
 					$itemType_del=$_GET["itemType"];
 					$query ="Delete from item_status_tracking where item ='$item_del' and trans_id ='$transId_del' and item_type='$itemType_del';";
-					echo "<br/>***Query: " .$query;
+					//echo "<br/>***Query: " .$query;
 					$res = $mysqli->query($query);
-					echo "<br/> Query delete: " .$res;
+					//echo "<br/> Query delete: " .$res;
 					if($res == ""){
 						$sqlError = $mysqli ->error;
 						//$sqlError=str_repeat("'","", (string)$sqlError);
 						$err = 'Can not Delete item:' .$item_del .' error: ' .$sqlError;
 						Echo "<script>alert('Can not Delete item: $item_del ');</script>";
-						echo $err;
+						//echo $err;
 					}else {
-						echo "Delete: $item_del trans_id: $transId_del";
+						//echo "Delete: $item_del trans_id: $transId_del";
 					}
 				}
 			
@@ -435,7 +435,7 @@ if (empty($_SESSION["status"])){
 	        Item:  <a style="margin-left:23px; "></a>
 	        <input type="text" name="item" class="item"/>     
 			
-			Item Type:
+			
 			<?php 
 				$option = $_SESSION["option"];
 				if(empty ($option)){
