@@ -1,6 +1,6 @@
 <?php 
 session_start();
-include "../dao/dao_conn_mysql_lex_bi.php";
+include "../dao/dao_conn_mysql_lex_db.php";
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 if (empty($_SESSION["transId"])){ 
 	$_SESSION["transId"]="";}
@@ -374,29 +374,24 @@ if (empty($_SESSION["status"])){
 					}			
 				}
 			}
-			if ($_SERVER["REQUEST_METHOD"] == "GET") {
-				//print_r($_SESSION);
-				//echo "<br/>Get: " .$_GET["transId"] ." Session: " .$_SESSION["transId"];			
-				if (empty($_GET["generate"])) {
-					//echo "</br> TransitID test: " .$_SESSION["transId"];
+			if ($_SERVER["REQUEST_METHOD"] == "GET") {						
+				if (empty($_GET["generate"])) {				
 				} else {					
 					if(isset($_GET["transId"]) and $_GET["generate"]="Generate" and ($_GET["transId"]<>$_SESSION["transId"])){
 						$_SESSION["transId"]=$_GET["transId"];
 						$trans_id_filter = $_SESSION["transId"];
 					}else {
-						$_SESSION["transId"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");
-						//echo "</br> TransitID : " .$_SESSION["transId"];
+						$_SESSION["transId"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");						
 					}			
 				}
-							
+						
 				
 				//DELETE:
 				if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="delete"){
 					$item_del = $_GET["item"];
 					$transId_del=$_GET["transId"];
 					$itemType_del=$_GET["itemType"];
-					$query ="Delete from item_status_tracking where item ='$item_del' and trans_id ='$transId_del' and item_type='$itemType_del';";
-					//echo "<br/>***Query: " .$query;
+					$query ="Delete from item_status_tracking where item ='$item_del' and trans_id ='$transId_del' and item_type='$itemType_del';";					
 					$res = $mysqli->query($query);
 					//echo "<br/> Query delete: " .$res;
 					if($res == ""){
@@ -495,9 +490,7 @@ if (empty($_SESSION["status"])){
 			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
 				echo "value";
 				$res->data_seek($row_no);
-				$row = $res->fetch_assoc();
-				//echo " id = " . $row['id'] . "\n";
-				//echo "<option value='$row[value]'>$row[value]</option>";
+				$row = $res->fetch_assoc();				
 				if(isset($_SESSION["fromhub"]) &&  $_SESSION["fromhub"] == $row[value]){
 					echo "<option value='$row[value]' selected>$row[value]</option>";
 				}else{
@@ -507,37 +500,20 @@ if (empty($_SESSION["status"])){
 			echo "</select>";
 			
 			echo "		To Hub: ";	
-				
-			//$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' and keyfunc='hub' order by value;");
-			
+						
 			echo "<select name='tohub' class='comboxhub'>";
 			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
 				echo "value";
 				$res->data_seek($row_no);
 				$row = $res->fetch_assoc();
-				//echo " id = " . $row['id'] . "\n";
-				//echo "<option value='$row[value]'>$row[value]</option>";
-				if(isset($_SESSION["tohub"]) &&  $_SESSION["tohub"] == $row[value]){
+							if(isset($_SESSION["tohub"]) &&  $_SESSION["tohub"] == $row[value]){
 					echo "<option value='$row[value]' selected>$row[value]</option>";
 				}else{
 					echo "<option value='$row[value]'>$row[value]</option>";
 				}
 			}
-			//echo "<option value='audi' selected>Audi</option>;";
 			echo "</select>";
 			
-			//$sql ="Select value from lex_bi.tbp_parameter where program='lextools' and function ='packgstatustracking' order by value;";
-			//$sqlr= mysql_query($sql,$mysqli);
-			//$existCount = mysql_num_rows($sqlr); // count the row nums
-			//if($existCount>0){
-			//	echo "<select name='status'>";
-			//	while ($row = mysql_fetch_array($result))
-			//	{ 
-			//		echo "<option value='$row[item]'>$row[item]</option>";
-			//		echo "<option value='audi' selected>Audi</option>;";
-			//	}	
-			//	echo "</select>";
-			//}		
 			?>
 			
 			<br/><br/>
@@ -572,7 +548,7 @@ if (empty($_SESSION["status"])){
                             <?php 
                             $trans_id_filter = $_SESSION["transId"] ;
                             $sql="Select trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at from item_status_tracking
-                            where trans_id ='$trans_id_filter' order by created_at desc limit 10" ;
+                            where trans_id ='$trans_id_filter' order by created_at desc limit 100" ;
                             //echo $sql;
                             $res = $mysqli->query($sql);
                             if($res->num_rows >0){

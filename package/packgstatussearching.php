@@ -1,5 +1,5 @@
 <?php 
-include "../dao/dao_conn_mysql_lex_bi.php";
+include "../dao/dao_conn_mysql_lex_db.php";
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 ?>
@@ -7,12 +7,11 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 			$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status =$exp_csv ="";	
 						
 			if(strlen(trim($fromdate))==0){
-				$fromdate=date("d-m-Y");
+				$fromdate=date("m/d/Y");
 			}
 			if(strlen(trim($todate))==0){
-				$todate=date("d-m-Y");
-			}
-			
+				$todate=date("m/d/Y");
+			}			
 				
 			if ($_SERVER["REQUEST_METHOD"] == "POST") {								
 				if(Empty($_POST["item"])){
@@ -362,7 +361,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 	 	//$(".form_datetime").datetimepicker({format: 'yyyy-mm-dd hh:ii'});
   		$( function() {
 		    $( "#upfromdate").datepicker();
-		    $( "#uptodate").datepicker({format: 'yyyy-mm-dd hh:ii'});
+		    $( "#uptodate").datepicker();
 	  	} );	
 			$(document).ready(function(){
 			  	$('.item').focus();
@@ -411,8 +410,8 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 				}			
 				echo "</select>";
 				
-				echo "	To Hub: <a style='margin-left:5px; '></a>";					
-				//$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' and keyfunc='tohub' order by value;");			
+				echo "	To Hub: <a style='margin-left:5px; '></a>";			
+							
 				echo "<select name='tohub' class='comboxhub'>";
 				for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
 					$res->data_seek($row_no);

@@ -1,6 +1,6 @@
 <?php
-session_start();
-$_SESSION['track_nb_chk']= null;
+	session_start();
+	$_SESSION['track_nb_chk']= null;
 ?>
 <html>
     <head>
@@ -28,7 +28,7 @@ $_SESSION['track_nb_chk']= null;
 			});
 			
 	  </script>
-	 <style>
+	  <style>
 		body {
 			font-size: 100%;
 			font-family: Verdana;
@@ -79,7 +79,7 @@ $_SESSION['track_nb_chk']= null;
 		  display: inline;
 		  
 }
-	</style> 
+	</style>
 	  
     </head>
 
@@ -118,8 +118,7 @@ $_SESSION['track_nb_chk']= null;
 					external_order_id as order_id,status as current,status_updated_at,
 					contact.name as seller_name,(address.address) as seller_address, hub.name as hub_name,  
 					route.number as Route_Name,package.from_id  as LMS_seller_id,contact.external_id as OMS_seller_id					
-					from package 
-					left join contact on contact.id = package.from_id 
+					from package left join contact on contact.id = package.from_id 
 					left join pickup_point as sender on sender.id = contact.id
 					left join contact hub on hub.id = sender.hub_id
 					left join route on route.id = sender.route_id
@@ -127,7 +126,8 @@ $_SESSION['track_nb_chk']= null;
 									
 					if(isset($_POST['track_nb']) &&  !empty($_POST['track_nb'])){
 						$query = $query ." where package.tracking_number='$packg'";//tracking id	
-						//$_SESSION['track_nb_chk'] = "checked";										
+						//$_SESSION['track_nb_chk'] = "checked";	
+									
 					}
 					else {
 						$query = $query ." where package.external_id='$packg'";//package
