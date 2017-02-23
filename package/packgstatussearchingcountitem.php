@@ -1,5 +1,5 @@
 <?php 
-include "../dao/dao_conn_mysql_lex_bi.php";
+include "../dao/dao_conn_mysql_lex_db.php";
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 ?>
@@ -20,7 +20,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 					$item= test_input($_POST["item"]);
 				}
 				if(Empty($_POST["transid"])){
-					$transId ="";
+					$transId =0;
 				}else {
 					$transId = test_input($_POST["transid"]);
 				}
@@ -58,7 +58,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 				}else {
 					$expcsv = "yes";
 					if(strlen(trim($transId)) == 0){
-						$trans_id_filter ='%';
+						$trans_id_filter =0;
 					}else{
 						$trans_id_filter = $transId;
 					}
@@ -95,10 +95,14 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 						$tohub_filter = $tohub;
 					}
 						
-					$sql="Select item,item_type,status,trans_id,fromhub,tohub,remark,user,created_at from item_status_tracking
-					where trans_id like '$trans_id_filter' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter'
+				
+					$sql="Select item,item_type,status,count(item) as existed_nb
+					from item_status_tracking
+					where item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter'
 					and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
-					order by created_at,item" ;				
+					Group by item,item_type,status
+					having count(item) >= $trans_id_filter
+					order by status,item" ;
 					$res = $mysqli->query($sql);				
 					// output headers so that the file is downloaded rather than displayed
 					header('Content-Type: text/csv; charset=utf-8');
@@ -106,7 +110,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 					// create a file pointer connected to the output stream
 					$output = fopen('php://output', 'w');
 					// output the column headingsc
-					fputcsv($output, array('Item', 'Item Type','Status','Transit Id','From Hub','To Hub','Remark','User','Created At'));
+					fputcsv($output, array('Item', 'Item Type','Status','Existed Count'));
 					// fetch the data
 					// loop over the rows, outputting them
 					while ($row = $res->fetch_assoc()) fputcsv($output, $row);
@@ -380,14 +384,14 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
     <body>
     	  
        
-        <h2 style="color:#DF7401;">PACKAGE STATUS SEARCHING</h2>
+        <h2 style="color:#DF7401;">PACKAGE STATUS SEARCHING BY COUNT EXISTED ITEM</h2>
          <p align="right"><a href="index.php">Home</a></p>     
 	   
          <form method="POST" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">
 			From Date:  <input type="text" id="upfromdate" name="fromdate" class="txtdate" value="<?php echo $fromdate;?>"> 
 			To Date:  <input type="text" id="uptodate" name="todate" class="txtdate" value="<?php echo $todate;?>">           	
 			<input type="submit" name="btsearch" value="Search" class="button"><br/> 
-			Transit Id: <a style="margin-left:7px; "></a>
+			Existed >= <a style="margin-left:0px; "></a>
 			<input type="text" name="transid" class="transid" class="txttransid" value="<?php echo $transId;?>"> 
 			Item:  <a style="margin-left:16px; "></a>
 			<input type="text" name="item" class="item" value="<?php echo $item;?>"/> 
@@ -449,18 +453,13 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
                              <th scope="col" style="width:150px;">Item</th>
                                     <th scope="col">Item Type</th>
                                     <th scope="col"><a>Status</a></th>
-                                    <th scope="col">Transit ID</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>From Hub</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>To Hub</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Remark</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Created At</th>
+                                    <th scope="col">Existed Number</th>                                 
                                    <!-- <th scope="col">Action</th>    -->                                  
                             
                             <?php 
                             
                             if(strlen(trim($transId)) == 0){
-                            	$trans_id_filter ='%';
+                            	$trans_id_filter =0;
                             }else{
                             	$trans_id_filter = $transId;
                             }
@@ -497,10 +496,13 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
                             	$tohub_filter = $tohub;
                             }
                             
-                         	$sql="Select trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at from item_status_tracking 
-									where trans_id like '%$trans_id_filter%' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter' 
+                         	$sql="Select item,item_type,status,count(item) as existed_nb
+                         			from item_status_tracking 
+									where item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter' 
                          			and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
-                         			order by created_at,item" ;
+                         			Group by item,item_type,status
+                         			having count(item) >= $trans_id_filter
+                         			order by status,item" ;
                          	//echo "<br/>".$sql;
 							$res = $mysqli->query($sql);
 							//echo "<br/> Data search ************************";												
@@ -515,12 +517,7 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 										echo "<td>$row[item]</td>";
 										echo "<td>$row[item_type]</td>";
 										echo "<td>$row[status]</td>";
-										echo "<td>$row[trans_id]</td>";
-										echo "<td>$row[fromhub]</td>";
-										echo "<td>$row[tohub]</td>";
-										echo "<td>$row[remark]</td>";
-										echo "<td>$row[user]</td>";
-										echo "<td>$row[created_at]</td>";
+										echo "<td>$row[existed_nb]</td>";									
 										//echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[trans_id]&&itemType=$row[item_type]>Delete</a></td>";
 										echo "</tr>";										
 									}
