@@ -22,6 +22,12 @@ body {
 <h3><b>OPS: Package Status Searching By Count Existed Item</b> </h3></br>
 <?php  echo "		-"?> <a href="package/packgstatussearchingcountitem.php"> Package Status Searching By Count Existed Item </a> <br/>
 
+<h3><b>OPS: Runsheet Outbound</b> </h3></br>
+<?php  echo "		-"?> <a href="package/rsoutbound.php"> Runsheet Outbound</a> <br/>
+<h3><b>OPS: Runsheet Inbound</b> </h3></br>
+<?php  echo "		-"?> <a href="package/rsinbound.php"> Runsheet Inbound</a> <br/>
+
+
 <h3><b>TEST</b> </br></h3>
 <?php  echo "		-"?> <a href="test.php"> TEST </a> <br/>
 		
