@@ -377,10 +377,38 @@ if (empty($_SESSION["status"])){
 				$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
 				//****************************************************************
 				if (empty($_GET["generate"])) {				
-				} else {					
+				} else {
+					
 					if(isset($_GET["transId"]) and $_GET["generate"]="Generate" and ($_GET["transId"]<>$_SESSION["transId"])){
-						$_SESSION["transId"]=$_GET["transId"];
-						$trans_id_filter = $_SESSION["transId"];
+						///$_SESSION["transId"]=$_GET["transId"];
+						//$trans_id_filter = $_SESSION["transId"];
+						//Get old data:
+						if(isset($_GET["transId"]) and ($_GET["transId"]<>$_SESSION["transId"]) ){
+							$_SESSION["transId"] = $_GET["transId"];
+							$trans_id_filter = $_GET["transId"];
+							echo "<br/> select: " .$trans_id_filter;
+							$sql="select id,from_hub,to_hub,type,user_created,user_created_at,user_updated,user_updated_at
+							from runsheet_head  where id= '$trans_id_filter'";
+							echo "<br/> Load:" .$sql;
+							$res = $mysqli->query($sql);
+							if($res->num_rows >0){
+								$nb = $res->num_rows;
+								//for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
+								for ($row_no =0; $row_no < $res->num_rows; $row_no++) {
+									$res->data_seek($row_no);
+									$row = $res->fetch_assoc();
+						
+									$_SESSION["fromhub"]=$row["from_hub"];
+									$_SESSION["tohub"]=$row["to_hub"];
+									$_SESSION["status"]=$row["type"];
+									//$_SESSION["status"]=$row[user_created];
+									//$_SESSION["status"]=$row[user_created_at];
+									//$_SESSION["status"]=$row[user_updated];
+									//$_SESSION["status"]=$row[user_updated_at];
+						
+								}
+						}
+							
 					}else {
 						$_SESSION["transId"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");
 						$trans_id= strtoupper($_SESSION["transId"]);
@@ -447,39 +475,10 @@ if (empty($_SESSION["status"])){
 							echo "<div class='modal-header'>Runsheet $trans_id Updated! </div>";							
 						}
 					}
-				}else {				
-					if(isset($_GET["transId"])){
-						$_SESSION["transId"]=$_GET["transId"];
-						$trans_id_filter = $_SESSION["transId"];					
-						$sql="select id,from_hub,to_hub,type,user_created,user_created_at,user_updated,user_updated_at from runsheet_head  where id= '$trans_id_filter'";
-						
-						//echo $sql;
-						$res = $mysqli->query($sql);
-						if($res->num_rows >0){
-							$nb = $res->num_rows;
-							//for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
-							for ($row_no =0; $row_no < $res->num_rows; $row_no++) {
-								$rownb = (string)($nb);
-								$nb = $nb-1;
-								$res->data_seek($row_no);
-								$row = $res->fetch_assoc();
-								echo "<tr class=table-row-one>";
-								//echo "<td><span class='cbxSelectOn'><input value='' type='checkbox' name=cbxSelectOne[]></span></td>";
-								echo "<td><span class=table-row-primary> $rownb </span></td>";
-								$_SESSION["transId"]= $row[id];
-								$_SESSION["fromhub"]=$row[from_hub];
-								$_SESSION["status"]=$row[to_hub];
-								$_SESSION["status"]=$row[type];
-								$_SESSION["status"]=$row[user_created];
-								$_SESSION["status"]=$row[user_created_at];
-								$_SESSION["status"]=$row[user_updated];
-								$_SESSION["status"]=$row[user_updated_at];
-								
-								echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[trans_id]&&itemType=$row[item_type]>Delete</a></td>";
-								echo "</tr>";
-							}
-						}
-					}
+				}
+				
+					
+					
 				}
 						
 				
@@ -549,6 +548,7 @@ if (empty($_SESSION["status"])){
 			
 			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' 
 					and keyfunc='hub' and value <>'ALL' order by value desc;");
+			echo "get hub";
 				
 			echo "<select name='fromhub' class='comboxhub'>";
 			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {

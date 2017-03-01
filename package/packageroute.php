@@ -90,15 +90,15 @@
 			echo $_SESSION['track_nb_chk'];
 		?>
         <form action="packageroute.php" method="POST">
-         Package Number <input type="text" name="packg" class="packg" />
+         Tracking Number <input type="text" name="packg" class="packg" />
          <!--  <input type="button"  id="search" value="search"/> <br/> -->
 		 <?php
 				if(  $_SESSION['track_nb_chk'] != null)
 				{
-					echo "<br>Tracking Number? <input type='checkbox' name='track_nb' checked/> <br/>";
+					echo "<br>Package Number? <input type='checkbox' name='track_nb' checked/> <br/>";
 				}
 				else{
-					echo "<br/>Tracking Number? <input type='checkbox' name='track_nb'/> <br/>";
+					echo "<br/>Package Number? <input type='checkbox' name='track_nb'/> <br/>";
 				}				
 		   ?>   
         </form>
