@@ -265,259 +265,217 @@ if (empty($_SESSION["status"])){
     </head>
 
     <body>
-      <?php
-			$optionErr = $option = $transId = "";			
-			//INSERT:
-			if ($_SERVER["REQUEST_METHOD"] == "POST") {
-				//echo "</br> TransitID test: " .$_SESSION["transId"];
-				//print_r($_SESSION);
-				if (empty($_POST["option"])) {
-					$optionErr = " *Item Type is required";
-				} else {
-					$option = test_input($_POST["option"]);
-					$_SESSION["option"]=$option;
-				}
-				
-				if($item ==""){
-					echo "<script>beep(2);</script>";
-						
-				}else{
-					if($trans_id==""){
-						echo "<script>beep(2);</script>";
-						echo "<div id=myModal class='modal'>
-						<div class='modal-content'>
-						<div class='modal-header'>
-						<span class='close'>&times;</span>
-						<h2>$item</h2>
-						</div>
-						<div class='modal-body'>
-						<h3>Can't save for this item</h3>
-						<h3>You didn't create Transit ID yet. Please, creating it by clicking Generate </h3>
-						</div>
-						<div class='modal-footer'>
-						</div>
-						</div>
-						</div>";
-				
-					}else{
-						if((!preg_match('/[a-zA-Z]*[0-9\.\-]*/',$item))){
-							echo "<script>beep(2);</script>";
-							echo "<div id=myModal class='modal'>
-							<div class='modal-content'>
-							<div class='modal-header'>
-							<span class='close'>&times;</span>
-							<h2>$item</h2>
-							</div>
-							<div class='modal-body'>
-							<h3>Can't save for this item</h3>
-							<h3>Item is not correct format. Accept characters, number and - or_ </h3>
-							</div>
-							<div class='modal-footer'>
-							</div>
-							</div>
-							</div>";
-						}else {
-							$query ="Insert into item_status_tracking (trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at)
-							value ('$trans_id','$item','$item_type','$status', '$fromhub','$tohub','$remark','$user','$create_at');";
-							$res = $mysqli->query($query);
-							//echo "<br/> Query: " .$res;
-							if($res == ""){
-								echo "<script>beep(2);</script>";
-								echo "<div id=myModal class='modal'>
-								<div class='modal-content'>
-								<div class='modal-header'>
-								<span class='close'>&times;</span>
-								<h2>$item</h2>
-								</div>
-								<div class='modal-body'>
-								<h3>Can't save for this item</h3>
-								<h3>Item is existed in this transit $trans_id already! (checking by yourself) </h3>
-								<h3>Or have a problem while Inserting to database (reporting to PMP team)</h3>
-								</div>
-								<div class='modal-footer'>
-								</div>
-								</div>
-								</div>";
-							}else {
-								echo "<script>beep(1);</script>";
-							}
-						}
-					}			
-				}
-			}
-			if ($_SERVER["REQUEST_METHOD"] == "GET") {				
-					
-				if(Empty($_GET["status"])){
-					$statusErr = " *Status is required";
-				}else {
-					$status = $_GET["status"];
-					$_SESSION["status"]=$status;
-				}
-				
-				if(Empty($_GET["fromhub"])){
-					$fromhub="";
-				}else {
-					$fromhub = $_GET["fromhub"];
-					$_SESSION["fromhub"]=$fromhub;
-				}
-				
-				if(Empty($_GET["tohub"])){
-					$tohub="";
-				}else {
-					$tohub = $_GET["tohub"];
-					$_SESSION["tohub"]=$tohub;
-				}
-					
-				
-				//$item = strtoupper (trim($_POST["item"]));
-				//$item_type = $option;
-				//$status=$_POST["status"];
-				//$remark="";
-				$user = getenv("username");//"thuy.nguyen@lazada.vn";
-				$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
-				//****************************************************************
-				if (empty($_GET["generate"])) {				
-				} else {
-					
-					if(isset($_GET["transId"]) and $_GET["generate"]="Generate" and ($_GET["transId"]<>$_SESSION["transId"])){
-						///$_SESSION["transId"]=$_GET["transId"];
-						//$trans_id_filter = $_SESSION["transId"];
-						//Get old data:
-						if(isset($_GET["transId"]) and ($_GET["transId"]<>$_SESSION["transId"]) ){
-							$_SESSION["transId"] = $_GET["transId"];
-							$trans_id_filter = $_GET["transId"];
-							echo "<br/> select: " .$trans_id_filter;
-							$sql="select id,from_hub,to_hub,type,user_created,user_created_at,user_updated,user_updated_at
-							from runsheet_head  where id= '$trans_id_filter'";
-							echo "<br/> Load:" .$sql;
-							$res = $mysqli->query($sql);
-							if($res->num_rows >0){
-								$nb = $res->num_rows;
-								//for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
-								for ($row_no =0; $row_no < $res->num_rows; $row_no++) {
-									$res->data_seek($row_no);
-									$row = $res->fetch_assoc();
-						
-									$_SESSION["fromhub"]=$row["from_hub"];
-									$_SESSION["tohub"]=$row["to_hub"];
-									$_SESSION["status"]=$row["type"];
-									//$_SESSION["status"]=$row[user_created];
-									//$_SESSION["status"]=$row[user_created_at];
-									//$_SESSION["status"]=$row[user_updated];
-									//$_SESSION["status"]=$row[user_updated_at];
-						
-								}
-						}
-							
-					}else {
-						$_SESSION["transId"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");
-						$trans_id= strtoupper($_SESSION["transId"]);
-						//Insert Runshet Header to database:
-						$query ="Insert into runsheet_head (id,from_hub,to_hub,type,user_created,user_created_at)
-						value ('$trans_id','$fromhub','$tohub', '$status','$user','$create_at');";
-						$res = $mysqli->query($query);
-						echo "<br/>" .$query;
-						echo "<br/> Query: " .$res;
-						if($res == ""){
-							echo "<script>beep(2);</script>";
-							echo "<div id=myModal class='modal'>
-							<div class='modal-content'>
-							<div class='modal-header'>
-							<span class='close'>&times;</span>
-							<h2>$item</h2>
-							</div>
-							<div class='modal-body'>
-							<h3>Can't save for this item</h3>
-							<h3>Item is existed in this transit $trans_id already! (checking by yourself) </h3>
-							<h3>Or have a problem while Inserting to database (reporting to PMP team)</h3>
-							</div>
-							<div class='modal-footer'>
-							</div>
-							</div>
-							</div>";
-						}else {
-							echo "<div class='modal-header'>Runsheet $trans_id Created! </div>";							
-						}										
-					}			
-				}
-				if (!empty($_GET["rsupdate"])) {
-					echo "<br/>Click Update" ;
-					if(isset($_GET["transId"]) and $_GET["rsupdate"]="Update" ){
-						echo "<br/>Click Update" ;
-						$_SESSION["transId"]=$_GET["transId"];
-						//$trans_id_filter = $_SESSION["transId"];
-						$trans_id= strtoupper($_SESSION["transId"]);
-						//Insert Runshet Header to database:
-						$query ="UPDATE lex_db.runsheet_head SET from_hub ='$fromhub', to_hub='$tohub', type='$status', user_updated='$user',user_updated_at='$create_at'
-						WHERE id='$trans_id'";					
-					
-						$res = $mysqli->query($query);
-						echo "<br/>" .$query;
-						echo "<br/> Query: " .$res;
-						if($res == ""){
-							echo "<script>beep(2);</script>";
-							echo "<div id=myModal class='modal'>
-							<div class='modal-content'>
-							<div class='modal-header'>
-							<span class='close'>&times;</span>
-							<h2>$item</h2>
-							</div>
-							<div class='modal-body'>
-							<h3>Can't save for this item</h3>
-							<h3>Item is existed in this transit $trans_id already! (checking by yourself) </h3>
-							<h3>Or have a problem while Inserting to database (reporting to PMP team)</h3>
-							</div>
-							<div class='modal-footer'>
-							</div>
-							</div>
-							</div>";
-						}else {
-							echo "<div class='modal-header'>Runsheet $trans_id Updated! </div>";							
-						}
-					}
-				}
-				
-					
-					
-				}
-						
-				
-				//DELETE:
-				if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="delete"){
-					$item_del = $_GET["item"];
-					$transId_del=$_GET["transId"];
-					$itemType_del=$_GET["itemType"];
-					$query ="Delete from item_status_tracking where item ='$item_del' and trans_id ='$transId_del' and item_type='$itemType_del';";					
-					$res = $mysqli->query($query);
-					//echo "<br/> Query delete: " .$res;
-					if($res == ""){
-						$sqlError = $mysqli ->error;
-						//$sqlError=str_repeat("'","", (string)$sqlError);
-						$err = 'Can not Delete item:' .$item_del .' error: ' .$sqlError;
-						Echo "<script>alert('Can not Delete item: $item_del ');</script>";
-						//echo $err;
-					}else {
-						//echo "Delete: $item_del trans_id: $transId_del";
-					}
-				}
-			
-				
-			}
-				
-			function test_input($data) {
-				$data = trim($data);
-				$data = stripslashes($data);
-				$data = htmlspecialchars($data);
-				return $data;
-			}
-			
+      <?php      
+      	$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status= "";
+      	//INSERT:
+      	if ($_SERVER["REQUEST_METHOD"] == "POST") {      		
+      		if (empty($_POST["option"])) {
+      			$optionErr = " *Item Type is required";
+      		} else {
+      			$option = test_input($_POST["option"]);
+      			$_SESSION["option"]=$option;
+      		}
+      		$item = strtoupper (trim($_POST["item"]));
+      		$trans_id = strtoupper (trim($_SESSION["transId"]));
+      	
+      		if($item ==""){
+      			echo "<script>beep(2);</script>";      			
+      		}else{
+      			if($trans_id==""){
+      				echo "<script>beep(2);</script>";
+      				echo "<div id=myModal class='modal'>
+      				<div class='modal-content'>
+      				<div class='modal-header'>
+      				<span class='close'>&times;</span>
+      				<h2>$item</h2>
+      				</div>
+      				<div class='modal-body'>
+      				<h3>Can't save for this item</h3>
+      				<h3>You didn't create Transit ID yet. Please, creating it by clicking Generate </h3>
+      				</div>
+      				<div class='modal-footer'>
+      				</div>
+      				</div>
+      				</div>";
+      	
+      			}else{
+      				if((!preg_match('/[a-zA-Z]*[0-9\.\-]*/',$item))){
+      					echo "<script>beep(2);</script>";
+      					echo "<div id=myModal class='modal'>
+      					<div class='modal-content'>
+      					<div class='modal-header'>
+      					<span class='close'>&times;</span>
+      					<h2>$item</h2>
+      					</div>
+      					<div class='modal-body'>
+      					<h3>Can't save for this item</h3>
+      					<h3>Item is not correct format. Accept characters, number and - or_ </h3>
+      					</div>
+      					<div class='modal-footer'>
+      					</div>
+      					</div>
+      					</div>";
+      				}else { 
+      					//Init data:
+      					$trans_id =$_SESSION["transId"];      					
+      					$item_type=$_SESSION["option"];      				
+      					$user = getenv("username");
+      					$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');  			
+      					     					
+      					$query ="INSERT INTO runsheet_detail(id,item,item_type,status,user_created,user_created_at)
+							VALUES ('$trans_id','$item','$item_type','Send', '$user','$create_at')";
+      					$res = $mysqli->query($query);
+      					echo "<br/> Insert: " .$res;
+      					if($res == ""){
+      						echo "<script>beep(2);</script>";
+      						echo "<div id=myModal class='modal'>
+      						<div class='modal-content'>
+      						<div class='modal-header'>
+      						<span class='close'>&times;</span>
+      						<h2>$item</h2>
+      						</div>
+      						<div class='modal-body'>
+      						<h3>Can't save for this item</h3>
+      						<h3>Item is existed in this transit $trans_id already! (checking by yourself) </h3>
+      						<h3>Or have a problem while Inserting to database (reporting to PMP team)</h3>
+      						</div>
+      						<div class='modal-footer'>
+      						</div>
+      						</div>
+      						</div>";
+      					}else {
+      						echo "<script>beep(1);</script>";
+      					}
+      				}
+      			}
+      		}
+      	}
+      	if ($_SERVER["REQUEST_METHOD"] == "GET") {
+      		if(Empty($_GET["status"])){
+      			$statusErr = " *Status is required";
+      		}else {
+      			$status = $_GET["status"];
+      			$_SESSION["status"]=$status;
+      		}
+      		
+      		if(Empty($_GET["fromhub"])){
+      			$fromhub="";
+      		}else {
+      			$fromhub = $_GET["fromhub"];
+      			$_SESSION["fromhub"]=$fromhub;
+      		}
+      		
+      		if(Empty($_GET["tohub"])){
+      			$tohub="";
+      		}else {
+      			$tohub = $_GET["tohub"];
+      			$_SESSION["tohub"]=$tohub;
+      		}
+      		$user = getenv("username");
+      		$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
+      		
+      		if (!empty($_GET["generate"])) {
+      			$_SESSION["transId"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");
+      			$trans_id= strtoupper($_SESSION["transId"]);
+      			//Insert Runshet Header to database:
+      			$query ="Insert into runsheet_head (id,from_hub,to_hub,type,user_created,user_created_at)
+      			value ('$trans_id','$fromhub','$tohub', '$status','$user','$create_at');";
+      			$res = $mysqli->query($query);
+      			echo "<br/>" .$query;
+      			echo "<br/> Query: " .$res;
+      			if($res == ""){
+      				echo "<script>beep(2);</script>";
+      				echo "<div id=myModal class='modal'>
+      				<div class='modal-content'>
+      				<div class='modal-header'>
+      				<span class='close'>&times;</span>
+      				<h2>$item</h2>
+      				</div>
+      				<div class='modal-body'>
+      				<h3>Can't save for this item</h3>
+      				<h3>Item is existed in this transit $trans_id already! (checking by yourself) </h3>
+      				<h3>Or have a problem while Inserting to database (reporting to PMP team)</h3>
+      				</div>
+      				<div class='modal-footer'>
+      				</div>
+      				</div>
+      				</div>";
+      			}else {
+      				echo "<div class='modal-header'>Runsheet $trans_id Created! </div>";
+      			}
+      		}
+      		if (!empty($_GET["rsupdate"])) {
+      			echo "<br/>Click Update" ;      			
+      				echo "<br/>Click Update" ;
+      				//$_SESSION["transId"]=$_GET["transId"];
+      				//$trans_id_filter = $_SESSION["transId"];
+      				$trans_id= strtoupper($_SESSION["transId"]);
+      				//Insert Runshet Header to database:
+      				$query ="UPDATE lex_db.runsheet_head SET from_hub ='$fromhub', to_hub='$tohub', type='$status', user_updated='$user',user_updated_at='$create_at'
+      				WHERE id='$trans_id'";
+      				$res = $mysqli->query($query);
+      				echo "<br/>" .$query;
+      				echo "<br/> Query: " .$res;
+      				if($res == ""){
+      					echo "<script>beep(2);</script>";
+      					echo "<div id=myModal class='modal'>
+      					<div class='modal-content'>
+      					<div class='modal-header'>
+      					<span class='close'>&times;</span>
+      					<h2>$item</h2>
+      					</div>
+      					<div class='modal-body'>
+      					<h3>Can't save for this item</h3>
+      					<h3>Item is existed in this transit $trans_id already! (checking by yourself) </h3>
+      					<h3>Or have a problem while Inserting to database (reporting to PMP team)</h3>
+      					</div>
+      					<div class='modal-footer'>
+      					</div>
+      					</div>
+      					</div>";
+      				}else {
+      					echo "<div class='modal-header'>Runsheet $trans_id Updated! </div>";
+      				}
+      			
+      		}
+      		if (isset($_GET["transId"]) and empty($_GET["rsupdate"]) and empty($_GET["generate"]) ) {      			
+      			$_SESSION["transId"] = $_GET["transId"];
+      			$trans_id_filter = $_GET["transId"];
+      			echo "<br/> select: " .$trans_id_filter;
+      			$sql="select id,from_hub,to_hub,type,user_created,user_created_at,user_updated,user_updated_at
+      			from runsheet_head  where id= '$trans_id_filter'";
+      			echo "<br/> Load:" .$sql;
+      			$res = $mysqli->query($sql);
+      			if($res->num_rows >0){
+      				$nb = $res->num_rows;      			
+      				for ($row_no =0; $row_no < $res->num_rows; $row_no++) {
+      					$res->data_seek($row_no);
+      					$row = $res->fetch_assoc();      					 
+      					$_SESSION["fromhub"]=$row["from_hub"];
+      					$_SESSION["tohub"]=$row["to_hub"];
+      					$_SESSION["status"]=$row["type"];    					    			     
+      				}
+      			}
+      		}
+      	}
+      	function test_input($data) {
+      		$data = trim($data);
+      		$data = stripslashes($data);
+      		$data = htmlspecialchars($data);
+      		return $data;
+      	}
 		?>
         <h2 style="color:#DF7401;">RUNSHEET OUTBOUND</h2>
         <p align="right"><a href="index.php">Home</a></p>      
-        <p align="right"><a href="package/packgstatussearching.php">Package status searching </a></p>       	
-	    <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >
-	       	Transit Id: <a style="margin-left: -3px; "></a>
+        <p align="right"><a href="package/packgstatussearching.php">Package status searching </a></p> 
+         <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >
+         	Transit Id: <a style="margin-left: -3px; "></a>
 	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["transId"];?>"> 
+         </form>      	
+	    <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >
+	       	<!-- Transit Id: <a style="margin-left: -3px; "></a>
+	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["transId"];?>"> 
+	       	-->
 	    	<input type="submit" name="generate" value="Create" class="button">
 	    	<input type="submit" name="rsupdate" value="Update" class="button">
 		    <br/>  
@@ -618,16 +576,15 @@ if (empty($_SESSION["status"])){
         		<tr class="table-header">
                    <!--<th scope="col" class="cbxSelectAll"> <input id="cbxSelectAll" type="checkbox" name="cbxSelectAll"> </th>-->
                         <th scope="col">Nb</th>
+                        	<th scope="col">Item Type</th>
                              <th scope="col" style="width:150px;">Item</th>
-                                    <th scope="col">Item Type</th>
-                                    <th scope="col"><a>Status</a></th>
-                                    <th scope="col">Transit ID</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>From Hub</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>To Hub</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Remark</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Created At</th>
-                                    <th scope="col">Action</th>                                    
+                             <th scope="col">Item Type</th>
+                             <th scope="col"><a>Status</a></th>
+                             <th scope="col">User Created</th>
+                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Created At</th>
+                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received</th>
+                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received At</th>                
+                             <th scope="col">Action</th>                                    
                                  <!--                            
                                  <tr class="table-search-one">
                                     <th></th>
@@ -640,9 +597,9 @@ if (empty($_SESSION["status"])){
                                  --> 
                             <?php 
                             $trans_id_filter = $_SESSION["transId"] ;
-                            $sql="Select trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at from item_status_tracking
-                            where trans_id ='$trans_id_filter' order by created_at desc limit 100" ;
-                            //echo $sql;
+                            $sql="Select id,item,item_type,status,user_created,user_created_at,user_received,user_received_at 
+                            from runsheet_detail where id ='$trans_id_filter' order by user_created_at desc limit 100" ;
+                            echo "<br/>Get data:" .$sql;
                             $res = $mysqli->query($sql);
                             if($res->num_rows >0){
                             	$nb = $res->num_rows;
@@ -655,16 +612,15 @@ if (empty($_SESSION["status"])){
                             		echo "<tr class=table-row-one>";
                             		//echo "<td><span class='cbxSelectOn'><input value='' type='checkbox' name=cbxSelectOne[]></span></td>";
                             		echo "<td><span class=table-row-primary> $rownb </span></td>";
+                            		echo "<td>$row[id]</td>";
                             		echo "<td>$row[item]</td>";
                             		echo "<td>$row[item_type]</td>";
                             		echo "<td>$row[status]</td>";
-                            		echo "<td>$row[trans_id]</td>";
-                            		echo "<td>$row[fromhub]</td>";
-                            		echo "<td>$row[tohub]</td>";
-                            		echo "<td>$row[remark]</td>";
-                            		echo "<td>$row[user]</td>";
-                            		echo "<td>$row[created_at]</td>";
-                            		echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[trans_id]&&itemType=$row[item_type]>Delete</a></td>";
+                            		echo "<td>$row[user_created]</td>";
+                            		echo "<td>$row[user_created_at]</td>";
+                            		echo "<td>$row[user_received]</td>";
+                            		echo "<td>$row[user_received_at]</td>";                            	
+                            		echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[id]>Delete</a></td>";
                             		echo "</tr>";
                             	}
                             }

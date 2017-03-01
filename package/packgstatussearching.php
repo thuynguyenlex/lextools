@@ -1,5 +1,5 @@
 <?php 
-include "../dao/dao_conn_mysql_lex_bi.php";
+include "../dao/dao_conn_mysql_lex_db.php";
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
 ?>
