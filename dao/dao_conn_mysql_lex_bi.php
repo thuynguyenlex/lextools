@@ -1,6 +1,6 @@
 <?php
 //Server info:
-$db_host="127.0.0.1";
+$db_host="localhost";
 $db_user="lex_dev";
 $db_pass="l3xd3v428@";
 $db_name="lex_db";
