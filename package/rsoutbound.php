@@ -376,7 +376,6 @@ if (empty($_SESSION["status"])){
       		
       		if (!empty($_GET["generate"])) {
       			$_SESSION["transId"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");
-      			//$trans_id = date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");
       			$trans_id= strtoupper($_SESSION["transId"]);
       			//Insert Runshet Header to database:
       			$query ="Insert into runsheet_head (id,from_hub,to_hub,type,user_created,user_created_at)
@@ -577,14 +576,14 @@ if (empty($_SESSION["status"])){
         		<tr class="table-header">
                    <!--<th scope="col" class="cbxSelectAll"> <input id="cbxSelectAll" type="checkbox" name="cbxSelectAll"> </th>-->
                         <th scope="col">Nb</th>
-                        <th scope="col">Runsheet ID </th>
-                        	<th scope="col">Item </th>
-                             <th scope="col" style="width:150px;">Item Type</th>
-                             <th scope="col">Status</th>
-                             <th scope="col"><a>User Created</a></th>
-                             <th scope="col">User Created At</th>
+                        	<th scope="col">Item Type</th>
+                             <th scope="col" style="width:150px;">Item</th>
+                             <th scope="col">Item Type</th>
+                             <th scope="col"><a>Status</a></th>
+                             <th scope="col">User Created</th>
+                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Created At</th>
                              <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received</th>
-                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received At</th>
+                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received At</th>                
                              <th scope="col">Action</th>                                    
                                  <!--                            
                                  <tr class="table-search-one">
