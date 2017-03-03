@@ -2,12 +2,12 @@
 session_start();
 include "../dao/dao_conn_mysql_lex_db.php";
 date_default_timezone_set('Asia/Ho_Chi_Minh');
-if (empty($_SESSION["transId"])){ 
-	$_SESSION["transId"]="";}
-if (empty($_SESSION["option"])){ 
-	$_SESSION["option"]="";}
-if (empty($_SESSION["status"])){ 
-	$_SESSION["status"]="";}
+if (empty($_SESSION["rsob"])){ 
+	$_SESSION["rsob"]="";}
+if (empty($_SESSION["optionrsob"])){ 
+	$_SESSION["optionrsob"]="";}
+if (empty($_SESSION["statusrsob"])){ 
+	$_SESSION["statusrsob"]="";}
 		
 ?>
 <!DOCTYPE HTML>
@@ -273,10 +273,10 @@ if (empty($_SESSION["status"])){
       			$optionErr = " *Item Type is required";
       		} else {
       			$option = test_input($_POST["option"]);
-      			$_SESSION["option"]=$option;
+      			$_SESSION["optionrsob"]=$option;
       		}
       		$item = strtoupper (trim($_POST["item"]));
-      		$trans_id = strtoupper (trim($_SESSION["transId"]));
+      		$trans_id = strtoupper (trim($_SESSION["rsob"]));
       	
       		if($item ==""){
       			echo "<script>beep(2);</script>";      			
@@ -317,8 +317,8 @@ if (empty($_SESSION["status"])){
       					</div>";
       				}else { 
       					//Init data:
-      					$trans_id =$_SESSION["transId"];      					
-      					$item_type=$_SESSION["option"];      				
+      					$trans_id =$_SESSION["rsob"];      					
+      					$item_type=$_SESSION["optionrsob"];      				
       					$user = getenv("username");
       					$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');  			
       					     					
@@ -355,28 +355,28 @@ if (empty($_SESSION["status"])){
       			$statusErr = " *Status is required";
       		}else {
       			$status = $_GET["status"];
-      			$_SESSION["status"]=$status;
+      			$_SESSION["statusrsob"]=$status;
       		}
       		
       		if(Empty($_GET["fromhub"])){
       			$fromhub="";
       		}else {
       			$fromhub = $_GET["fromhub"];
-      			$_SESSION["fromhub"]=$fromhub;
+      			$_SESSION["fromhubrsob"]=$fromhub;
       		}
       		
       		if(Empty($_GET["tohub"])){
       			$tohub="";
       		}else {
       			$tohub = $_GET["tohub"];
-      			$_SESSION["tohub"]=$tohub;
+      			$_SESSION["tohubrsob"]=$tohub;
       		}
       		$user = getenv("username");
       		$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
       		
       		if (!empty($_GET["generate"])) {
-      			$_SESSION["transId"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");
-      			$trans_id= strtoupper($_SESSION["transId"]);
+      			$_SESSION["rsob"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");
+      			$trans_id= strtoupper($_SESSION["rsob"]);
       			//Insert Runshet Header to database:
       			$query ="Insert into runsheet_head (id,from_hub,to_hub,type,user_created,user_created_at)
       			value ('$trans_id','$fromhub','$tohub', '$status','$user','$create_at');";
@@ -407,9 +407,9 @@ if (empty($_SESSION["status"])){
       		if (!empty($_GET["rsupdate"])) {
       			echo "<br/>Click Update" ;      			
       				echo "<br/>Click Update" ;
-      				//$_SESSION["transId"]=$_GET["transId"];
-      				//$trans_id_filter = $_SESSION["transId"];
-      				$trans_id= strtoupper($_SESSION["transId"]);
+      				//$_SESSION["rsob"]=$_GET["transId"];
+      				$trans_id_filter = $_SESSION["rsob"];
+      				$trans_id= strtoupper($_SESSION["rsob"]);
       				//Insert Runshet Header to database:
       				$query ="UPDATE lex_db.runsheet_head SET from_hub ='$fromhub', to_hub='$tohub', type='$status', user_updated='$user',user_updated_at='$create_at'
       				WHERE id='$trans_id'";
@@ -439,7 +439,7 @@ if (empty($_SESSION["status"])){
       			
       		}
       		if (isset($_GET["transId"]) and empty($_GET["rsupdate"]) and empty($_GET["generate"]) ) {      			
-      			$_SESSION["transId"] = $_GET["transId"];
+      			$_SESSION["rsob"] = $_GET["transId"];
       			$trans_id_filter = $_GET["transId"];
       			echo "<br/> select: " .$trans_id_filter;
       			$sql="select id,from_hub,to_hub,type,user_created,user_created_at,user_updated,user_updated_at
@@ -451,9 +451,9 @@ if (empty($_SESSION["status"])){
       				for ($row_no =0; $row_no < $res->num_rows; $row_no++) {
       					$res->data_seek($row_no);
       					$row = $res->fetch_assoc();      					 
-      					$_SESSION["fromhub"]=$row["from_hub"];
-      					$_SESSION["tohub"]=$row["to_hub"];
-      					$_SESSION["status"]=$row["type"];    					    			     
+      					$_SESSION["fromhubrsob"]=$row["from_hub"];
+      					$_SESSION["tohubrsob"]=$row["to_hub"];
+      					$_SESSION["statusrsob"]=$row["type"];    					    			     
       				}
       			}
       		}
@@ -470,11 +470,11 @@ if (empty($_SESSION["status"])){
         <p align="right"><a href="package/packgstatussearching.php">Package status searching </a></p> 
          <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >
          	Transit Id: <a style="margin-left: -3px; "></a>
-	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["transId"];?>"> 
+	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["rsob"];?>"> 
          </form>      	
 	    <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >
 	       	<!-- Transit Id: <a style="margin-left: -3px; "></a>
-	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["transId"];?>"> 
+	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["rsob"];?>"> 
 	       	-->
 	    	<input type="submit" name="generate" value="Create" class="button">
 	    	<input type="submit" name="rsupdate" value="Update" class="button">
@@ -493,7 +493,7 @@ if (empty($_SESSION["status"])){
 					$row = $res->fetch_assoc();
 					//echo " id = " . $row['id'] . "\n";				
 					//echo "<option value='$row[value]'>$row[value]</option>";
-					if(isset($_SESSION["status"]) &&  $_SESSION["status"] == $row[value]){
+					if(isset($_SESSION["statusrsob"]) &&  $_SESSION["statusrsob"] == $row[value]){
 						echo "<option value='$row[value]' selected>$row[value]</option>";
 					}else{
 						echo "<option value='$row[value]'>$row[value]</option>";
@@ -506,14 +506,13 @@ if (empty($_SESSION["status"])){
 			
 			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' 
 					and keyfunc='hub' and value <>'ALL' order by value desc;");
-			echo "get hub";
-				
+			
 			echo "<select name='fromhub' class='comboxhub'>";
 			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
 				echo "value";
 				$res->data_seek($row_no);
 				$row = $res->fetch_assoc();				
-				if(isset($_SESSION["fromhub"]) &&  $_SESSION["fromhub"] == $row[value]){
+				if(isset($_SESSION["fromhubrsob"]) &&  $_SESSION["fromhubrsob"] == $row[value]){
 					echo "<option value='$row[value]' selected>$row[value]</option>";
 				}else{
 					echo "<option value='$row[value]'>$row[value]</option>";
@@ -528,7 +527,7 @@ if (empty($_SESSION["status"])){
 				echo "value";
 				$res->data_seek($row_no);
 				$row = $res->fetch_assoc();
-							if(isset($_SESSION["tohub"]) &&  $_SESSION["tohub"] == $row[value]){
+							if(isset($_SESSION["tohubrsob"]) &&  $_SESSION["tohubrsob"] == $row[value]){
 					echo "<option value='$row[value]' selected>$row[value]</option>";
 				}else{
 					echo "<option value='$row[value]'>$row[value]</option>";
@@ -543,7 +542,7 @@ if (empty($_SESSION["status"])){
 	        Item:  <a style="margin-left:23px; "></a>
 	        <input type="text" name="item" class="item"/>    
 	        <?php 	      
-		        $option = $_SESSION["option"];
+		        $option = $_SESSION["optionrsob"];
 		        if(empty ($option)){
 		        	echo "<input type=radio name=option checked value=package>Package Number";
 		        	echo "<input type=radio name=option value=tracking>Tracking Id";
@@ -596,7 +595,7 @@ if (empty($_SESSION["status"])){
                                  </tr>
                                  --> 
                             <?php 
-                            $trans_id_filter = $_SESSION["transId"] ;
+                            $trans_id_filter = $_SESSION["rsob"] ;
                             $sql="Select id,item,item_type,status,user_created,user_created_at,user_received,user_received_at 
                             from runsheet_detail where id ='$trans_id_filter' order by user_created_at desc limit 100" ;
                             echo "<br/>Get data:" .$sql;
