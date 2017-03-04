@@ -316,9 +316,7 @@ if (empty($_SESSION["statusrsib"])){
       					</div>
       					</div>";
       				}else { 
-      					//RECEIVED linehaule status:
-      					
-      					//Update received status:
+      					//RECEIVED linehaule status:     					     				
       					$trans_id =$_SESSION["rsib"];      					
       					$item_type=$_SESSION["optionrsib"];      				
       					$user = getenv("username");      								
@@ -351,7 +349,7 @@ if (empty($_SESSION["statusrsib"])){
       							$row = $res->fetch_assoc();
       							$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
       							echo "<br/> Existed: " .$row['status'];
-      							if($row['status']=='Send'){//Update Received
+      							if(strtoupper( $row['status'])=='SEND'){//Update Received
       								$query ="UPDATE runsheet_detail
       								SET status='RECEIVE', user_received ='$user', user_received_at = '$create_at'
       								WHERE id ='$trans_id' and item='$item';";
@@ -526,8 +524,10 @@ if (empty($_SESSION["statusrsib"])){
       				}
       			}
       		}
+      		ECHO "<BR/> ACCTION: " .$_GET["action"];
       		//LOST:
-      		if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="lost"){
+      		//if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="lost"){
+      		if( $_GET["action"]=="lost"){
       			$item = $_GET["item"];
       			$trans_id=$_GET["transId"];      		
       			$query ="UPDATE runsheet_detail
@@ -558,7 +558,8 @@ if (empty($_SESSION["statusrsib"])){
       			}      			
       		}
       		//RECEIVE:
-      		if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="receive"){
+      		//	if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="receive"){
+      		if( $_GET["action"]=="receive"){
       			$item = $_GET["item"];
       			$trans_id=$_GET["transId"];
       			$query ="UPDATE runsheet_detail

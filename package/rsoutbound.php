@@ -634,8 +634,11 @@ if (empty($_SESSION["statusrsob"])){
                             		echo "<td>$row[user_created]</td>";
                             		echo "<td>$row[user_created_at]</td>";
                             		echo "<td>$row[user_received]</td>";
-                            		echo "<td>$row[user_received_at]</td>";                            	
-                            		echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[id]>Delete</a></td>";
+                            		echo "<td>$row[user_received_at]</td>"; 
+                            		if(strtoupper($row["status"])=='SEND'){
+                            			echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[id]>DELETE</a></td>";
+                            		}
+                            		
                             		echo "</tr>";
                             	}
                             }
