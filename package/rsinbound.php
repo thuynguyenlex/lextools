@@ -2,12 +2,12 @@
 session_start();
 include "../dao/dao_conn_mysql_lex_db.php";
 date_default_timezone_set('Asia/Ho_Chi_Minh');
-if (empty($_SESSION["rsob"])){ 
-	$_SESSION["rsob"]="";}
-if (empty($_SESSION["optionrsob"])){ 
-	$_SESSION["optionrsob"]="";}
-if (empty($_SESSION["statusrsob"])){ 
-	$_SESSION["statusrsob"]="";}
+if (empty($_SESSION["rsib"])){ 
+	$_SESSION["rsib"]="";}
+if (empty($_SESSION["optionrsib"])){ 
+	$_SESSION["optionrsib"]="";}
+if (empty($_SESSION["statusrsib"])){ 
+	$_SESSION["statusrsib"]="";}
 		
 ?>
 <!DOCTYPE HTML>
@@ -273,10 +273,10 @@ if (empty($_SESSION["statusrsob"])){
       			$optionErr = " *Item Type is required";
       		} else {
       			$option = test_input($_POST["option"]);
-      			$_SESSION["optionrsob"]=$option;
+      			$_SESSION["optionrsib"]=$option;
       		}
       		$item = strtoupper (trim($_POST["item"]));
-      		$trans_id = strtoupper (trim($_SESSION["rsob"]));
+      		$trans_id = strtoupper (trim($_SESSION["rsib"]));
       	
       		if($item ==""){
       			echo "<script>beep(2);</script>";      			
@@ -316,16 +316,18 @@ if (empty($_SESSION["statusrsob"])){
       					</div>
       					</div>";
       				}else { 
-      					//Init data:
-      					$trans_id =$_SESSION["rsob"];      					
-      					$item_type=$_SESSION["optionrsob"];      				
-      					$user = getenv("username");
-      					$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');  			
-      					     					
-      					$query ="INSERT INTO runsheet_detail(id,item,item_type,status,user_created,user_created_at)
-							VALUES ('$trans_id','$item','$item_type','SEND', '$user','$create_at')";
-      					$res = $mysqli->query($query);
-      					echo "<br/> Insert: " .$res;
+      					//RECEIVED linehaule status:
+      					
+      					//Update received status:
+      					$trans_id =$_SESSION["rsib"];      					
+      					$item_type=$_SESSION["optionrsib"];      				
+      					$user = getenv("username");      								
+      					//Check existed?
+      					$query ="SELECT id,item,item_type,status,user_created,user_created_at,user_received,user_received_at 
+							FROM runsheet_detail where  id ='$trans_id' and item='$item'";	
+      					echo "<br/> Checking: " .$query;
+      					$res = $mysqli->query($query); 
+      					echo "<br/> Checking result:" .$res->num_rows;
       					if($res == ""){
       						echo "<script>beep(2);</script>";
       						echo "<div id=myModal class='modal'>
@@ -335,16 +337,83 @@ if (empty($_SESSION["statusrsob"])){
       						<h2>$item</h2>
       						</div>
       						<div class='modal-body'>
-      						<h3>Can't save for this item</h3>
-      						<h3>Item is existed in this transit $trans_id already! (checking by yourself) </h3>
-      						<h3>Or have a problem while Inserting to database (reporting to PMP team)</h3>
+      						<h3>Can't Receive for this item</h3>
+      						<h3>There is a problem during getting data (report to PMP team) </h3>      						
       						</div>
       						<div class='modal-footer'>
       						</div>
       						</div>
       						</div>";
       					}else {
-      						echo "<script>beep(1);</script>";
+      						echo "<br/> number rows: " .$res->num_rows;
+      						if( $res->num_rows > 0){
+      							$res->data_seek(0);
+      							$row = $res->fetch_assoc();
+      							$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
+      							echo "<br/> Existed: " .$row['status'];
+      							if($row['status']=='Send'){//Update Received
+      								$query ="UPDATE runsheet_detail
+      								SET status='RECEIVE', user_received ='$user', user_received_at = '$create_at'
+      								WHERE id ='$trans_id' and item='$item';";
+      								$res = $mysqli->query($query);
+      								echo "<br/> Update: " .$query;
+      								if($res == ""){
+      									echo "<script>beep(2);</script>";
+      									echo "<div id=myModal class='modal'>
+      									<div class='modal-content'>
+      									<div class='modal-header'>
+      									<span class='close'>&times;</span>
+      									<h2>$item</h2>
+      									</div>
+      									<div class='modal-body'>
+      									<h3>Can't Update for this item</h3>
+      									<h3>Can't update item $item for runsheet $trans_id </h3>
+      									<h3>Or have a problem while getting database (reporting to PMP team)</h3>
+      									</div>
+      									<div class='modal-footer'>
+      									</div>
+      									</div>
+      									</div>";
+      								}else{
+      									echo "<script>beep(1);</script>";
+      									echo "<br/> Updated!";
+      								}
+      									
+      							}else{ //Received already => warning users
+      								echo "<script>beep(2);</script>";
+      								echo "<div id=myModal class='modal'>
+      								<div class='modal-content'>
+      								<div class='modal-header'>
+      								<span class='close'>&times;</span>
+      								<h2>$item</h2>
+      								</div>
+      								<div class='modal-body'>
+      								<h3>RECEIVED Already!</h3>
+      								<h3>Item is Received already for the Runsheet $trans_id </h3>      							
+      								</div>
+      								<div class='modal-footer'>
+      								</div>
+      								</div>
+      								</div>";
+      							}
+      						}else { //Not eixisted:
+      							echo "<script>beep(2);</script>";
+      							echo "<div id=myModal class='modal'>
+      							<div class='modal-content'>
+      							<div class='modal-header'>
+      							<span class='close'>&times;</span>
+      							<h2>$item</h2>
+      							</div>
+      							<div class='modal-body'>
+      							<h3>Can't Receive for this item</h3>
+      							<h3>Because Item is NOT existed in this Runsheet $trans_id </h3>
+      							</div>
+      							<div class='modal-footer'>
+      							</div>
+      							</div>
+      							</div>";
+      						}     					
+      						
       					}
       				}
       			}
@@ -355,28 +424,28 @@ if (empty($_SESSION["statusrsob"])){
       			$statusErr = " *Status is required";
       		}else {
       			$status = $_GET["status"];
-      			$_SESSION["statusrsob"]=$status;
+      			$_SESSION["statusrsib"]=$status;
       		}
       		
       		if(Empty($_GET["fromhub"])){
       			$fromhub="";
       		}else {
       			$fromhub = $_GET["fromhub"];
-      			$_SESSION["fromhubrsob"]=$fromhub;
+      			$_SESSION["fromhubrsib"]=$fromhub;
       		}
       		
       		if(Empty($_GET["tohub"])){
       			$tohub="";
       		}else {
       			$tohub = $_GET["tohub"];
-      			$_SESSION["tohubrsob"]=$tohub;
+      			$_SESSION["tohubrsib"]=$tohub;
       		}
       		$user = getenv("username");
       		$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
       		
       		if (!empty($_GET["generate"])) {
-      			$_SESSION["rsob"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");
-      			$trans_id= strtoupper($_SESSION["rsob"]);
+      			$_SESSION["rsib"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");
+      			$trans_id= strtoupper($_SESSION["rsib"]);
       			//Insert Runshet Header to database:
       			$query ="Insert into runsheet_head (id,from_hub,to_hub,type,user_created,user_created_at)
       			value ('$trans_id','$fromhub','$tohub', '$status','$user','$create_at');";
@@ -408,8 +477,8 @@ if (empty($_SESSION["statusrsob"])){
       			echo "<br/>Click Update" ;      			
       				echo "<br/>Click Update" ;
       				//$_SESSION["rsob"]=$_GET["transId"];
-      				$trans_id_filter = $_SESSION["rsob"];
-      				$trans_id= strtoupper($_SESSION["rsob"]);
+      				$trans_id_filter = $_SESSION["rsib"];
+      				$trans_id= strtoupper($_SESSION["rsib"]);
       				//Insert Runshet Header to database:
       				$query ="UPDATE lex_db.runsheet_head SET from_hub ='$fromhub', to_hub='$tohub', type='$status', user_updated='$user',user_updated_at='$create_at'
       				WHERE id='$trans_id'";
@@ -439,7 +508,7 @@ if (empty($_SESSION["statusrsob"])){
       			
       		}
       		if (isset($_GET["transId"]) and empty($_GET["rsupdate"]) and empty($_GET["generate"]) ) {      			
-      			$_SESSION["rsob"] = $_GET["transId"];
+      			$_SESSION["rsib"] = $_GET["transId"];
       			$trans_id_filter = $_GET["transId"];
       			echo "<br/> select: " .$trans_id_filter;
       			$sql="select id,from_hub,to_hub,type,user_created,user_created_at,user_updated,user_updated_at
@@ -451,27 +520,74 @@ if (empty($_SESSION["statusrsob"])){
       				for ($row_no =0; $row_no < $res->num_rows; $row_no++) {
       					$res->data_seek($row_no);
       					$row = $res->fetch_assoc();      					 
-      					$_SESSION["fromhubrsob"]=$row["from_hub"];
-      					$_SESSION["tohubrsob"]=$row["to_hub"];
-      					$_SESSION["statusrsob"]=$row["type"];    					    			     
+      					$_SESSION["fromhubrsib"]=$row["from_hub"];
+      					$_SESSION["tohubrsib"]=$row["to_hub"];
+      					$_SESSION["statusrsib"]=$row["type"];    					    			     
       				}
       			}
       		}
-      		//DELETE:
-      		if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="delete"){
-      			$item_del = $_GET["item"];
-      			$transId_del=$_GET["transId"];      			
-      			$query ="Delete from runsheet_detail where item ='$item_del' and id ='$transId_del';";
+      		//LOST:
+      		if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="lost"){
+      			$item = $_GET["item"];
+      			$trans_id=$_GET["transId"];      		
+      			$query ="UPDATE runsheet_detail
+      			SET status='LOST', user_received ='$user', user_received_at = '$create_at'
+      			WHERE id ='$trans_id' and item='$item';";
       			$res = $mysqli->query($query);
-      			echo "<br/> Query delete: " .$res;
+      			echo "<br/> Update: " .$query;
       			if($res == ""){
-      				$sqlError = $mysqli ->error;
-      				//$sqlError=str_repeat("'","", (string)$sqlError);
-      				$err = 'Can not Delete item:' .$item_del .' error: ' .$sqlError;
-      				Echo "<script>alert('Can not Delete item: $item_del ');</script>";      				
-      			}else {
+      				echo "<script>beep(2);</script>";
+      				echo "<div id=myModal class='modal'>
+      				<div class='modal-content'>
+      				<div class='modal-header'>
+      				<span class='close'>&times;</span>
+      				<h2>$item</h2>
+      				</div>
+      				<div class='modal-body'>
+      				<h3>Can't Update LOST for this item</h3>
+      				<h3>Can't update LOST item $item for runsheet $trans_id </h3>
+      				<h3>Or have a problem while getting database (reporting to PMP team)</h3>
+      				</div>
+      				<div class='modal-footer'>
+      				</div>
+      				</div>
+      				</div>";
+      			}else{
       				echo "<script>beep(1);</script>";
+      				echo "<br/> LOST!";
+      			}      			
+      		}
+      		//RECEIVE:
+      		if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="receive"){
+      			$item = $_GET["item"];
+      			$trans_id=$_GET["transId"];
+      			$query ="UPDATE runsheet_detail
+      			SET status='RECEIVE AFTER LOST', user_received ='$user', user_received_at = '$create_at'
+      			WHERE id ='$trans_id' and item='$item';";
+      			$res = $mysqli->query($query);
+      			echo "<br/> Update: " .$query;
+      			if($res == ""){
+      				echo "<script>beep(2);</script>";
+      				echo "<div id=myModal class='modal'>
+      				<div class='modal-content'>
+      				<div class='modal-header'>
+      				<span class='close'>&times;</span>
+      				<h2>$item</h2>
+      				</div>
+      				<div class='modal-body'>
+      				<h3>Can't Update LOST for this item</h3>
+      				<h3>Can't update LOST item $item for runsheet $trans_id </h3>
+      				<h3>Or have a problem while getting database (reporting to PMP team)</h3>
+      				</div>
+      				<div class='modal-footer'>
+      				</div>
+      				</div>
+      				</div>";
+      			}else{
+      				echo "<script>beep(1);</script>";
+      				echo "<br/> RECEIVE!";
       			}
+      			 
       		}
       	}
       	function test_input($data) {
@@ -481,19 +597,19 @@ if (empty($_SESSION["statusrsob"])){
       		return $data;
       	}
 		?>
-        <h2 style="color:#DF7401;">RUNSHEET OUTBOUND</h2>
+        <h2 style="color:#DF7401;">RUNSHEET INBOUND Checked-in</h2>
         <p align="right"><a href="index.php">Home</a></p>      
         <p align="right"><a href="package/packgstatussearching.php">Package status searching </a></p> 
          <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >
          	Transit Id: <a style="margin-left: -3px; "></a>
-	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["rsob"];?>"> 
+	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["rsib"];?>"> 
          </form>      	
 	    <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >
 	       	<!-- Transit Id: <a style="margin-left: -3px; "></a>
-	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["rsob"];?>"> 
+	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["rsib"];?>"> 
+	       	<input type="submit" name="rsupdate" value="Update" class="button">
 	       	-->
-	    	<input type="submit" name="generate" value="Create" class="button">
-	    	<input type="submit" name="rsupdate" value="Update" class="button">
+	    	<input type="submit" name="generate" value="Loading" class="button">	    	
 		    <br/>  
  			
 			<br/>
@@ -509,17 +625,15 @@ if (empty($_SESSION["statusrsob"])){
 					$row = $res->fetch_assoc();
 					//echo " id = " . $row['id'] . "\n";				
 					//echo "<option value='$row[value]'>$row[value]</option>";
-					if(isset($_SESSION["statusrsob"]) &&  $_SESSION["statusrsob"] == $row[value]){
+					if(isset($_SESSION["statusrsib"]) &&  $_SESSION["statusrsib"] == $row[value]){
 						echo "<option value='$row[value]' selected>$row[value]</option>";
 					}else{
 						echo "<option value='$row[value]'>$row[value]</option>";
 					}
 			}
 			
-			echo "</select>";			
-		
-			echo "<br/>		From Hub: ";			
-			
+			echo "</select>";				
+			echo "		From Hub: ";				
 			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='lextools' 
 					and keyfunc='hub' and value <>'ALL' order by value desc;");
 			
@@ -528,7 +642,7 @@ if (empty($_SESSION["statusrsob"])){
 				echo "value";
 				$res->data_seek($row_no);
 				$row = $res->fetch_assoc();				
-				if(isset($_SESSION["fromhubrsob"]) &&  $_SESSION["fromhubrsob"] == $row[value]){
+				if(isset($_SESSION["fromhubrsib"]) &&  $_SESSION["fromhubrsib"] == $row[value]){
 					echo "<option value='$row[value]' selected>$row[value]</option>";
 				}else{
 					echo "<option value='$row[value]'>$row[value]</option>";
@@ -543,7 +657,7 @@ if (empty($_SESSION["statusrsob"])){
 				echo "value";
 				$res->data_seek($row_no);
 				$row = $res->fetch_assoc();
-							if(isset($_SESSION["tohubrsob"]) &&  $_SESSION["tohubrsob"] == $row[value]){
+							if(isset($_SESSION["tohubrsib"]) &&  $_SESSION["tohubrsib"] == $row[value]){
 					echo "<option value='$row[value]' selected>$row[value]</option>";
 				}else{
 					echo "<option value='$row[value]'>$row[value]</option>";
@@ -553,39 +667,16 @@ if (empty($_SESSION["statusrsob"])){
 			
 			?>
 		 </form>	
-			<br/><br/>
+		
 		<form method="post" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >	       	
 	        Item:  <a style="margin-left:23px; "></a>
-	        <input type="text" name="item" class="item"/>    
-	        <?php 	      
-		        $option = $_SESSION["optionrsob"];
-		        if(empty ($option)){
-		        	echo "<input type=radio name=option checked value=package>Package Number";
-		        	echo "<input type=radio name=option value=tracking>Tracking Id";
-		        	echo "<input type=radio name=option value=runsheet>Runsheet";
-		        }else{
-		        	if (isset($option) && $option=="package") {
-		        		echo "<input type=radio name=option checked value=package>Package Number";
-		        	}else{
-		        		echo "<input type=radio name=option value=package>Package Number";
-		        	}
-		        	if (isset($option) && $option=="tracking") {
-		        		echo "<input type=radio name=option checked value=tracking>Tracking Number";
-		        	}else{
-		        		echo "<input type=radio name=option value=tracking>Tracking Id";
-		        	}
-		        	if (isset($option) && $option=="runsheet") {
-		        		echo "<input type=radio name=option checked value=runsheet>Runsheet";
-		        	}else{
-		        		echo "<input type=radio name=option value=runsheet>Runsheet";
-		        	}		        
-		        }        	        
-		        
-	        ?> 
-			
+	        <input type="text" name="item" class="item"/>   
+	    
 		 
-        </form>        
+        </form>
+        <!-- Checked in  ---->        
         <div>
+        <p>Checked-In (0)</p>
         <table cellspacing="0" cellpadding="3" rules="cols" id="gvwcategory" class="table-display">
         	<tbody>
         		<tr class="table-header">
@@ -599,33 +690,21 @@ if (empty($_SESSION["statusrsob"])){
                              <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Created At</th>
                              <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received</th>
                              <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received At</th>                
-                             <th scope="col">Action</th>                                    
-                                 <!--                            
-                                 <tr class="table-search-one">
-                                    <th></th>
-                                    <th scope="col"><input placeholder="Search by Id" type="text" onchange="return search(this.value, this.id);" id="search_id" value="" /></th>
-                                    <th scope="col"><input placeholder="Search by Name" type="text" onchange="return search(this.value, this.id);" id="search_name" value="" /></th>
-                                    <th scope="col"><input placeholder="Search by Url" type="text" onchange="return search(this.value, this.id);" id="search_url" value="" /></th>
-                                    <th scope="col"><input placeholder="Search by Url" type="text" onchange="return search(this.value, this.id);" id="search_url" value="" /></th>
-                                    <th></th>
-                                 </tr>
-                                 --> 
+                                                  
                             <?php 
-                            $trans_id_filter = $_SESSION["rsob"] ;
+                            $trans_id_filter = $_SESSION["rsib"] ;
                             $sql="Select id,item,item_type,status,user_created,user_created_at,user_received,user_received_at 
-                            from runsheet_detail where id ='$trans_id_filter' order by user_created_at desc limit 100" ;
+                            from runsheet_detail where id ='$trans_id_filter' and status like 'RECEIVE%' order by user_created_at desc limit 100" ;
                             echo "<br/>Get data:" .$sql;
                             $res = $mysqli->query($sql);
                             if($res->num_rows >0){
-                            	$nb = $res->num_rows;
-                            	//for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
+                            	$nb = $res->num_rows;                  
                             	for ($row_no =0; $row_no < $res->num_rows; $row_no++) {
                             		$rownb = (string)($nb);
                             		$nb = $nb-1;
                             		$res->data_seek($row_no);
                             		$row = $res->fetch_assoc();
-                            		echo "<tr class=table-row-one>";
-                            		//echo "<td><span class='cbxSelectOn'><input value='' type='checkbox' name=cbxSelectOne[]></span></td>";
+                            		echo "<tr class=table-row-one>";                            		
                             		echo "<td><span class=table-row-primary> $rownb </span></td>";
                             		echo "<td>$row[id]</td>";
                             		echo "<td>$row[item]</td>";
@@ -635,16 +714,114 @@ if (empty($_SESSION["statusrsob"])){
                             		echo "<td>$row[user_created_at]</td>";
                             		echo "<td>$row[user_received]</td>";
                             		echo "<td>$row[user_received_at]</td>";                            	
-                            		echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[id]>Delete</a></td>";
+                            		//echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[id]>Delete</a></td>";
                             		echo "</tr>";
                             	}
                             }
-                            ?>
-                                 
-                                  
+                            ?>   
                                  
              </tbody></table>
-       </div>        
+       </div> 
+        <!-- Not Checked in  ---->   
+       <div>
+        <p>Not Checked-in (0)</p>
+        <table cellspacing="0" cellpadding="3" rules="cols" id="gvwcategory" class="table-display">
+        	<tbody>
+        		<tr class="table-header">
+                   <!--<th scope="col" class="cbxSelectAll"> <input id="cbxSelectAll" type="checkbox" name="cbxSelectAll"> </th>-->
+                        <th scope="col">Nb</th>
+                        	<th scope="col">Item Type</th>
+                             <th scope="col" style="width:150px;">Item</th>
+                             <th scope="col">Item Type</th>
+                             <th scope="col"><a>Status</a></th>
+                             <th scope="col">User Created</th>
+                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Created At</th>
+                            <!-- <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received</th>
+                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received At</th>                
+                              --> 
+                             <th scope="col">Action</th>                                  
+                              
+                            <?php 
+                            $trans_id_filter = $_SESSION["rsib"] ;
+                            $sql="Select id,item,item_type,status,user_created,user_created_at,user_received,user_received_at 
+                            from runsheet_detail where id ='$trans_id_filter' and status ='SEND' order by user_created_at desc limit 100" ;
+                            //echo "<br/>Get data:" .$sql;
+                            $res = $mysqli->query($sql);
+                            if($res->num_rows >0){
+                            	$nb = $res->num_rows;                      
+                            	for ($row_no =0; $row_no < $res->num_rows; $row_no++) {
+                            		$rownb = (string)($nb);
+                            		$nb = $nb-1;
+                            		$res->data_seek($row_no);
+                            		$row = $res->fetch_assoc();
+                            		echo "<tr class=table-row-one>";                            		
+                            		echo "<td><span class=table-row-primary> $rownb </span></td>";
+                            		echo "<td>$row[id]</td>";
+                            		echo "<td>$row[item]</td>";
+                            		echo "<td>$row[item_type]</td>";
+                            		echo "<td>$row[status]</td>";
+                            		echo "<td>$row[user_created]</td>";
+                            		echo "<td>$row[user_created_at]</td>";
+                            		//echo "<td>$row[user_received]</td>";
+                            		//echo "<td>$row[user_received_at]</td>";                            	
+                            		echo "<td><a href=?action=lost&&item=$row[item]&&transId=$row[id]>LOST</a></td>";
+                            		echo "</tr>";
+                            	}
+                            }
+                            ?>   
+                                 
+             </tbody></table>
+       </div>
+         <!-- Lost ---->   
+         
+        <div>
+        <p>Lost packages (0)</p>
+        <table cellspacing="0" cellpadding="3" rules="cols" id="gvwcategory" class="table-display">
+        	<tbody>
+        		<tr class="table-header">
+                   <!--<th scope="col" class="cbxSelectAll"> <input id="cbxSelectAll" type="checkbox" name="cbxSelectAll"> </th>-->
+                        <th scope="col">Nb</th>
+                        	<th scope="col">Item Type</th>
+                             <th scope="col" style="width:150px;">Item</th>
+                             <th scope="col">Item Type</th>
+                             <th scope="col"><a>Status</a></th>
+                             <th scope="col">User Created</th>
+                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Created At</th>
+                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Updated</th>
+                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Updated At</th>                
+                             <th scope="col">Action</th>                                 
+                             
+                            <?php 
+                            $trans_id_filter = $_SESSION["rsib"] ;
+                            $sql="Select id,item,item_type,status,user_created,user_created_at,user_received,user_received_at 
+                            from runsheet_detail where id ='$trans_id_filter' and status='LOST' order by user_created_at desc limit 100" ;
+                           // echo "<br/>Get data:" .$sql;
+                            $res = $mysqli->query($sql);
+                            if($res->num_rows >0){
+                            	$nb = $res->num_rows;                            	
+                            	for ($row_no =0; $row_no < $res->num_rows; $row_no++) {
+                            		$rownb = (string)($nb);
+                            		$nb = $nb-1;
+                            		$res->data_seek($row_no);
+                            		$row = $res->fetch_assoc();
+                            		echo "<tr class=table-row-one>";                            
+                            		echo "<td><span class=table-row-primary> $rownb </span></td>";
+                            		echo "<td>$row[id]</td>";
+                            		echo "<td>$row[item]</td>";
+                            		echo "<td>$row[item_type]</td>";
+                            		echo "<td>$row[status]</td>";
+                            		echo "<td>$row[user_created]</td>";
+                            		echo "<td>$row[user_created_at]</td>";
+                            		echo "<td>$row[user_received]</td>";
+                            		echo "<td>$row[user_received_at]</td>";                            	
+                            		echo "<td><a href=?action=receive&&item=$row[item]&&transId=$row[id]>RECEIVE</a></td>";
+                            		echo "</tr>";
+                            	}
+                            }
+                            ?>   
+                                 
+             </tbody></table>
+       </div>       
      
 	
 		<script>
