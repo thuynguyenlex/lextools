@@ -13,7 +13,7 @@ if (empty($_SESSION["statusrsib"])){
 <!DOCTYPE HTML>
 <html>
     <head>
-        <title>Runsheet Outbound</title>
+        <title>Runsheet Inbound</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
 		<script type="text/javascript">
@@ -84,7 +84,7 @@ if (empty($_SESSION["statusrsib"])){
 
 		table {
 			border-collapse: collapse;
-			width: 98%;
+			width: 80%;
 			background-color: #EFEFFB;
 			border-radius: 4px;
 			font-size: 95%;
@@ -266,7 +266,7 @@ if (empty($_SESSION["statusrsib"])){
 
     <body>
       <?php      
-      	$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status= "";
+      	$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status= $res="";
       	//INSERT:
       	if ($_SERVER["REQUEST_METHOD"] == "POST") {      		
       		if (empty($_POST["option"])) {
@@ -446,7 +446,7 @@ if (empty($_SESSION["statusrsib"])){
       			$trans_id= strtoupper($_SESSION["rsib"]);
       			//Insert Runshet Header to database:
       			$query ="Insert into runsheet_head (id,from_hub,to_hub,type,user_created,user_created_at)
-      			value ('$trans_id','$fromhub','$tohub', '$status','$user','$create_at');";
+      			value ('$trans_id','$fromhub','$tohub', '$type','$user','$create_at');";
       			$res = $mysqli->query($query);
       			echo "<br/>" .$query;
       			echo "<br/> Query: " .$res;
@@ -524,10 +524,10 @@ if (empty($_SESSION["statusrsib"])){
       				}
       			}
       		}
-      		ECHO "<BR/> ACCTION: " .$_GET["action"];
+      		//ECHO "<BR/> ACCTION: " .$_GET["action"];
       		//LOST:
       		//if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="lost"){
-      		if( $_GET["action"]=="lost"){
+      		if( isset($_GET["action"]) && $_GET["action"]=="lost"){
       			$item = $_GET["item"];
       			$trans_id=$_GET["transId"];      		
       			$query ="UPDATE runsheet_detail
@@ -559,7 +559,7 @@ if (empty($_SESSION["statusrsib"])){
       		}
       		//RECEIVE:
       		//	if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="receive"){
-      		if( $_GET["action"]=="receive"){
+      		if( isset($_GET["action"]) && $_GET["action"]=="receive"){
       			$item = $_GET["item"];
       			$trans_id=$_GET["transId"];
       			$query ="UPDATE runsheet_detail
@@ -600,8 +600,7 @@ if (empty($_SESSION["statusrsib"])){
 		?>
         <h2 style="color:#DF7401;">RUNSHEET INBOUND Checked-in</h2>
         <p align="right"><a href="index.php">Home</a></p>      
-        <p align="right"><a href="package/packgstatussearching.php">Package status searching </a></p> 
-         <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >
+                <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >
          	Transit Id: <a style="margin-left: -3px; "></a>
 	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["rsib"];?>"> 
          </form>      	
@@ -683,7 +682,7 @@ if (empty($_SESSION["statusrsib"])){
         		<tr class="table-header">
                    <!--<th scope="col" class="cbxSelectAll"> <input id="cbxSelectAll" type="checkbox" name="cbxSelectAll"> </th>-->
                         <th scope="col">Nb</th>
-                        	<th scope="col">Item Type</th>
+                        	<th scope="col">RS Id</th>
                              <th scope="col" style="width:150px;">Item</th>
                              <th scope="col">Item Type</th>
                              <th scope="col"><a>Status</a></th>
@@ -695,7 +694,7 @@ if (empty($_SESSION["statusrsib"])){
                             <?php 
                             $trans_id_filter = $_SESSION["rsib"] ;
                             $sql="Select id,item,item_type,status,user_created,user_created_at,user_received,user_received_at 
-                            from runsheet_detail where id ='$trans_id_filter' and status like 'RECEIVE%' order by user_created_at desc limit 100" ;
+                            from runsheet_detail where id ='$trans_id_filter' and status like 'RECEIVE%' order by user_received_at desc limit 100" ;
                             echo "<br/>Get data:" .$sql;
                             $res = $mysqli->query($sql);
                             if($res->num_rows >0){
@@ -795,7 +794,7 @@ if (empty($_SESSION["statusrsib"])){
                             <?php 
                             $trans_id_filter = $_SESSION["rsib"] ;
                             $sql="Select id,item,item_type,status,user_created,user_created_at,user_received,user_received_at 
-                            from runsheet_detail where id ='$trans_id_filter' and status='LOST' order by user_created_at desc limit 100" ;
+                            from runsheet_detail where id ='$trans_id_filter' and status='LOST' order by user_received_at desc limit 100" ;
                            // echo "<br/>Get data:" .$sql;
                             $res = $mysqli->query($sql);
                             if($res->num_rows >0){
