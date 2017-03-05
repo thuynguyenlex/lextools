@@ -135,7 +135,7 @@ if(Empty($fromhub) ){
 <!DOCTYPE HTML>
 <html>
     <head>
-        <title>Package Status Searching</title>
+        <title>Runsheet Manager</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -383,7 +383,7 @@ if(Empty($fromhub) ){
     <body>
     	  
        
-        <h2 style="color:#DF7401;">PACKAGE STATUS SEARCHING</h2>
+        <h2 style="color:#DF7401;">RUNSHEET MANAGER</h2>
          <p align="right"><a href="index.php">Home</a></p>     
 	   
          <form method="POST" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>">

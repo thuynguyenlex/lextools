@@ -84,7 +84,7 @@ if (empty($_SESSION["status"])){
 
 		table {
 			border-collapse: collapse;
-			width: 98%;
+			width: 80%;
 			background-color: #EFEFFB;
 			border-radius: 4px;
 			font-size: 95%;
@@ -304,7 +304,7 @@ if (empty($_SESSION["status"])){
 				$item_type = $option;
 				//$status=$_POST["status"];
 				$remark="";
-				$user = getenv("username");//"thuy.nguyen@lazada.vn"; 
+				$user =  getenv("REMOTE_ADDR");// getenv("username");//"thuy.nguyen@lazada.vn"; 
 				$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
 				
 				if($item ==""){

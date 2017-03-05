@@ -125,12 +125,12 @@
 					left join address on address.id = contact.address_id ";						
 									
 					if(isset($_POST['track_nb']) &&  !empty($_POST['track_nb'])){
-						$query = $query ." where package.tracking_number='$packg'";//tracking id	
+						$query = $query ." where package.external_id='$packg'";//tracking id	
 						//$_SESSION['track_nb_chk'] = "checked";	
 									
 					}
 					else {
-						$query = $query ." where package.external_id='$packg'";//package
+						$query = $query ." where package.tracking_number='$packg'";//package
 						//$_SESSION['track_nb_chk']= null;
 					}
 			
