@@ -8,7 +8,9 @@ if (empty($_SESSION["optionrsib"])){
 	$_SESSION["optionrsib"]="";}
 if (empty($_SESSION["typersib"])){ 
 	$_SESSION["typersib"]="";}
-		
+if (empty($_SESSION["statusrsib"])){
+	$_SESSION["statusrsib"]="";}
+	
 ?>
 <!DOCTYPE HTML>
 <html>

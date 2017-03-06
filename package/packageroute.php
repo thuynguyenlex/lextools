@@ -108,7 +108,7 @@
 			if ($_SERVER['REQUEST_METHOD']=="POST")
 			{
 				$packg= $_POST['packg'];
-				$packg=strtoupper($packg);
+				$packg=trim( strtoupper($packg));
 				if($packg !="")
 				{
 					// Connecting, selecting database

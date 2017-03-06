@@ -4,10 +4,12 @@ include "../dao/dao_conn_mysql_lex_db.php";
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 if (empty($_SESSION["rsob"])){ 
 	$_SESSION["rsob"]="";}
-if (empty($_SESSION["optionrsob"])){ 
+if (empty($_SESSION["optionrsob"])){  
 	$_SESSION["optionrsob"]="";}
 if (empty($_SESSION["typersob"])){ 
 	$_SESSION["typersob"]="";}
+if (empty($_SESSION["statusrsob"])){  
+	$_SESSION["statusrsob"]="";}
 		
 ?>
 <!DOCTYPE HTML>
@@ -537,11 +539,7 @@ if (empty($_SESSION["typersob"])){
 	       	Runsheet Status:  <a style="margin-left: 5px; "><?php echo $_SESSION["statusrsob"];?> </a>
          </form>      	
 	    <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >	 
-	    	<a style="margin-left: 75px; "></a>   
-	    	<input type="submit" name="generate" value="Create" class="button">
-	    	<input type="submit" name="rsupdate" value="Update" class="button">
-	    	<input type="submit" name="rsdispatchob" value="Dispatch" class="button">
-		  <br/>
+	    	
 			Type <a style="margin-left: 22px; "></a>   
 			<?php 							
 			$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='rsoutbound' and keyfunc='RsType' and value <>'ALL' order by value desc;");
@@ -591,6 +589,12 @@ if (empty($_SESSION["typersob"])){
 			}
 			echo "</select>";			
 			?>
+			<br/>
+			<a style="margin-left: 75px; "></a>   
+	    	<input type="submit" name="generate" value="Create" class="button">
+	    	<input type="submit" name="rsupdate" value="Update" class="button">
+	    	<input type="submit" name="rsdispatchob" value="Dispatch" class="button">
+		  	<br/>
 		 </form>	
 			
 		<form method="post" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >

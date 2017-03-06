@@ -7,7 +7,7 @@ if(Empty($fromhub) ){
 	
 ?>
  <?php
-			$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status =$exp_csv ="";	
+			$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status=$type =$exp_csv = $date_filter ="";	
 						
 			if(strlen(trim($fromdate))==0){
 				$fromdate=date("m/d/Y");
@@ -16,7 +16,8 @@ if(Empty($fromhub) ){
 				$todate=date("m/d/Y");
 			}			
 				
-			if ($_SERVER["REQUEST_METHOD"] == "POST") {								
+			if ($_SERVER["REQUEST_METHOD"] == "POST") {		
+				echo "Search";
 				if(Empty($_POST["item"])){
 					$item="";
 				}else {
@@ -33,7 +34,11 @@ if(Empty($fromhub) ){
 				}else {
 					$status = test_input($_POST["status"]);				
 				}
-				
+				if(Empty($_POST["type"])){
+					$type = "";
+				}else {
+					$type = test_input($_POST["type"]);
+				}
 				if(Empty($_POST["fromhub"])){
 					$fromhub = "ALL";
 				}else {
@@ -87,6 +92,11 @@ if(Empty($fromhub) ){
 					}else{
 						$status_filter = $status;
 					}
+					if(trim($type)=='ALL' or trim($type)==''){
+						$type_filter ="%";
+					}else{
+						$type_filter = $type;
+					}
 					if(trim($fromhub)=='ALL' or trim($fromhub)==''){
 						$frmhub_filter ="%";
 					}else{
@@ -97,11 +107,36 @@ if(Empty($fromhub) ){
 					}else{
 						$tohub_filter = $tohub;
 					}
-						
-					$sql="Select item,item_type,status,trans_id,fromhub,tohub,remark,user,created_at from item_status_tracking
-					where trans_id like '$trans_id_filter' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter'
-					and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
-					order by created_at,item" ;				
+					switch (trim($type)){
+						case "ALL":
+							$date_filter =" and user_created_at between '$fromdate_filter' and '$todate_filter' ";
+							break;
+						case "PACK":
+							$date_filter =" and user_created_at between '$fromdate_filter' and '$todate_filter' ";
+							break;
+						case "DISPATCH":
+							$date_filter =" and user_dispatch_at between '$fromdate_filter' and '$todate_filter' ";
+							break;
+						case "DONE":
+							$date_filter =" and user_done_at between '$fromdate_filter' and '$todate_filter' ";
+							break;
+						default:
+							$date_filter ="";
+					}
+					
+				/*		
+				//	$sql="Select item,item_type,status,trans_id,fromhub,tohub,remark,user,created_at from item_status_tracking
+				//	where trans_id like '$trans_id_filter' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter'
+				//	and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
+				//	order by created_at,item" ;
+					
+					$sql="SELECT  id,from_hub,to_hub,type,status_rs,user_created,user_created_at,user_updated,user_updated_at,
+						user_dispatch,user_dispatch_at,user_done,user_done_at
+						FROM lex_db.runsheet_head
+						WHERE id like '$trans_id_filter' and from_hub like '$frmhub_filter' and to_hub like '$tohub_filter' 
+						and type like '$type_filter' and status_rs like '$status_filter' $date_filter  ";
+					echo "<br/> Select: " .$sql;
+					
 					$res = $mysqli->query($sql);				
 					// output headers so that the file is downloaded rather than displayed
 					header('Content-Type: text/csv; charset=utf-8');
@@ -114,6 +149,7 @@ if(Empty($fromhub) ){
 					// loop over the rows, outputting them
 					while ($row = $res->fetch_assoc()) fputcsv($output, $row);
 					exit();
+					*/
 				}
 				//echo "<br/>item: " .$item;
 				//echo "<br/>transit id: " .$transId;
@@ -185,11 +221,11 @@ if(Empty($fromhub) ){
 			width: 98%;
 			background-color: #EFEFFB;
 			border-radius: 4px;
-			font-size: 95%;
+			font-size: 81%;
 		}
 
 		th, td {
-			padding: 6px;
+			padding: 4px;
 			text-align: left;
 			border: 1px solid #CED8F6;
 			border-radius: 2px;
@@ -390,11 +426,10 @@ if(Empty($fromhub) ){
 			From Date:  <input type="text" id="upfromdate" name="fromdate" class="txtdate" value="<?php echo $fromdate;?>"> 
 			To Date:  <input type="text" id="uptodate" name="todate" class="txtdate" value="<?php echo $todate;?>">           	
 			<input type="submit" name="btsearch" value="Search" class="button"><br/> 
-			Transit Id: <a style="margin-left:7px; "></a>
+			Runsheet# <a style="margin-left:1px; "></a>
 			<input type="text" name="transid" class="transid" class="txttransid" value="<?php echo $transId;?>"> 
-			Item:  <a style="margin-left:16px; "></a>
-			<input type="text" name="item" class="item" value="<?php echo $item;?>"/> 
-			
+			------:  <a style="margin-left:16px; "></a>
+			<input type="text" name="item" class="item" value="<?php echo $item;?>" disabled/> 			
 			<input type="submit" name="btcsv" value="CSV" class="button"><br/>
 			
 			<?php 		
@@ -425,20 +460,42 @@ if(Empty($fromhub) ){
 						echo "<option value='$row[value]'>$row[value]</option>";
 					}
 				}
-				echo "</select>";
-				echo "<br/>Status: <a style='margin-left:10px; '></a>";
-				$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='packgstatustracking' and keyfunc='SatusOpts' order by value desc;");
-				echo "<select name='status'  class='combostatus'>";
+				echo "</select>";			
+				echo "<br/>Type: <a style='margin-left: 21px;'></a>";				
+				$res = $mysqli->query("Select value from lex_db.tbp_parameter where program='lextools' and function ='rsoutbound' and keyfunc='RsType' and value <>'ALL' order by value desc;");
+				echo "<select name='type' class='combostatus'>";
 				for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
 					$res->data_seek($row_no);
 					$row = $res->fetch_assoc();
-					if(isset($status) &&  $status == $row[value]){
+					if(isset($type) &&  $type == $row[value]){
 						echo "<option value='$row[value]' selected>$row[value]</option>";
 					}else{
 						echo "<option value='$row[value]'>$row[value]</option>";
 					}
-				}
+				}					
 				echo "</select>";
+				echo " RS Status: <a style='margin-left: -24px;'></a> <select name='status' class='combostatus'>";
+				if(isset($status) &&  $status == "ALL"){
+					echo "<option value='ALL' selected>ALL</option>";
+				}else{
+					echo "<option value='ALL'>ALL</option>";
+				}
+				if(isset($status) &&  $status == "PACK"){
+					echo "<option value='PACK' selected>PACK</option>";
+				}else{
+					echo "<option value='PACK'>PACK</option>";
+				}
+				if(isset($status) &&  $status == "DISPATCH"){
+					echo "<option value='DISPATCH' selected>DISPATCH</option>";
+				}else{
+					echo "<option value='DISPATCH'>DISPATCH</option>";
+				}
+				if(isset($status) &&  $status == "DONE"){
+					echo "<option value='DONE' selected>DONE</option>";
+				}else{
+					echo "<option value='DONE'>DONE</option>";
+				}				
+				echo "</select>";				
 			?>			
 			<br/><br/>	
 			 
@@ -448,17 +505,22 @@ if(Empty($fromhub) ){
         	<tbody>
         		<tr class="table-header">
                    <!--<th scope="col" class="cbxSelectAll"> <input id="cbxSelectAll" type="checkbox" name="cbxSelectAll"> </th>-->
-                        <th scope="col">Nb</th>
-                             <th scope="col" style="width:150px;">Item</th>
-                                    <th scope="col">Item Type</th>
-                                    <th scope="col"><a>Status</a></th>
-                                    <th scope="col">Transit ID</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>From Hub</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>To Hub</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Remark</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User</th>
-                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Created At</th>
-                                   <!-- <th scope="col">Action</th>    -->                                 
+                          <th scope="col">Nb</th>
+                             <th scope="col"">Runsheet</th>
+                                    <th scope="col">From Hub</th>
+                                    <th scope="col"><a>To Hub</a></th>
+                                    <th scope="col">RS Type</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Status</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Create</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Create At</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Update</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Update At</th>
+                                 	<th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Dispacth</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Dispacth At</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Done</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Done At</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Action</th>
+                                    <!-- <th scope="col">Action</th>    -->                                 
                             
                             <?php 
                             
@@ -489,6 +551,11 @@ if(Empty($fromhub) ){
                             }else{
                             	$status_filter = $status;
                             }
+                            if(trim($type)=='ALL' or trim($type)==''){
+                            	$type_filter ="%";
+                            }else{
+                            	$type_filter = $type;
+                            }
                             if(trim($fromhub)=='ALL' or trim($fromhub)==''){
                             	$frmhub_filter ="%";
                             }else{
@@ -499,11 +566,30 @@ if(Empty($fromhub) ){
                             }else{
                             	$tohub_filter = $tohub;
                             }
-                            
-                         	$sql="Select trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at from item_status_tracking 
-									where trans_id like '%$trans_id_filter%' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter' 
-                         			and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
-                         			order by created_at,item" ;
+                          
+                            switch (trim($status)){
+                            	case "ALL":
+                            		$date_filter =" and user_created_at between '$fromdate_filter' and '$todate_filter' order by user_created_at desc";
+                            		break;
+                            	case "PACK":
+                            		$date_filter =" and user_created_at between '$fromdate_filter' and '$todate_filter'  order by user_created_at desc";
+                            		break;
+                            	case "DISPATCH":
+                            		$date_filter =" and user_dispatch_at between '$fromdate_filter' and '$todate_filter' order by user_dispatch_at desc  ";
+                            		break;
+                            	case "DONE":
+                            		$date_filter =" and user_done_at between '$fromdate_filter' and '$todate_filter' order by user_done_at desc ";
+                            		break;
+                            	default:
+                            		$date_filter ="";
+                            }                            	
+                                                        	
+                            $sql="SELECT  id,from_hub,to_hub,type,status_rs,user_created,user_created_at,user_updated,user_updated_at,
+                            user_dispatch,user_dispatch_at,user_done,user_done_at
+                            FROM lex_db.runsheet_head
+                            WHERE id like '%$trans_id_filter%' and from_hub like '$frmhub_filter' and to_hub like '$tohub_filter'
+                            and type like '$type_filter' and status_rs like '$status_filter' $date_filter  ";
+                           // echo "<br/> Select: " .$sql;                          
                          	//echo "<br/>".$sql;
 							$res = $mysqli->query($sql);
 							//echo "<br/> Data search ************************";												
@@ -515,16 +601,33 @@ if(Empty($fromhub) ){
 										$row = $res->fetch_assoc();										
 										echo "<tr class=table-row-one>";
 										echo "<td><span class=table-row-primary> $rownb </span></td>";
-										echo "<td>$row[item]</td>";
-										echo "<td>$row[item_type]</td>";
-										echo "<td>$row[status]</td>";
-										echo "<td>$row[trans_id]</td>";
-										echo "<td>$row[fromhub]</td>";
-										echo "<td>$row[tohub]</td>";
-										echo "<td>$row[remark]</td>";
-										echo "<td>$row[user]</td>";
-										echo "<td>$row[created_at]</td>";
-										//echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[trans_id]&&itemType=$row[item_type]>Delete</a></td>";
+										echo "<td>$row[id]</td>";
+										echo "<td>$row[from_hub]</td>";
+										echo "<td>$row[to_hub]</td>";
+										echo "<td>$row[type]</td>";
+										echo "<td>$row[status_rs]</td>";
+										echo "<td>$row[user_created]</td>";
+										echo "<td>$row[user_created_at]</td>";
+										echo "<td>$row[user_updated]</td>";
+										echo "<td>$row[user_updated_at]</td>";
+										echo "<td>$row[user_dispatch]</td>";
+										echo "<td>$row[user_dispatch_at]</td>";
+										echo "<td>$row[user_done]</td>";
+										echo "<td>$row[user_done_at]</td>";
+										echo "<td>";
+										if($row["status_rs"]=="PACK"){											
+											echo "<a target = '_blank' href=http://10.19.203.242/lextools/runsheet/rsoutbound.php?transId=$row[id]>Dispatch</a>";
+											//echo "<a target = '_blank' href=http://localhost/lextools/runsheet/rsoutbound.php?transId=$row[id]>Dispatch</a>";
+										}
+										if($row["status_rs"]=="DISPATCH"){										
+											echo "<a target = '_blank' href=http://10.19.203.242/lextools/runsheet/rsinbound.php?transId=$row[id]>Check-In</a>";
+											//echo "<a target = '_blank' href=http://localhost/lextools/runsheet/rsinbound.php?transId=$row[id]>Check-In</a>";
+										}
+										if($row["status_rs"]=="DONE"){											
+											echo "<a target = '_blank' href=http://10.19.203.242/lextools/runsheet/rsinbound.php?transId=$row[id]>VIEW</a>";
+											//echo "<a target = '_blank' href=http://localhost/lextools/runsheet/rsinbound.php?transId=$row[id]>VIEW</a>";
+										}										
+										echo "</td>";
 										echo "</tr>";										
 									}
 								}							

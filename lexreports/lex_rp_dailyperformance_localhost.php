@@ -19,7 +19,7 @@ echo date('l jS \of F Y h:i:s A');
 	// Connecting, selecting database
 	$dbconn = pg_connect("host=thlmslivebidb1.aws port=5436 dbname=lms user=nguyen_thuy password=EYXWTEfKhb")  or die('Could not connect: ' . pg_last_error());
 	//$dbconn_mysql= mysql_connect("computing.datamart.vn","thuynguyen","thuynguyen") or die(mysql_error());
-	$dbconn_mysql= mysql_connect("127.0.0.1","root","") or die(mysql_error());
+	$dbconn_mysql= mysql_connect("10.19.203.242:3303","lex_dev","l3xd3v428@") or die(mysql_error());
 	mysql_select_db("lex_bi") or die("Cannot connect to database: lex_bi");
 	//ini_set('max_execution_time', 0);
 	//Logs info:
@@ -791,8 +791,11 @@ for($i=1; $i<12; $i++){
 	// Connecting, selecting database
 	$dbconn = pg_connect("host=thlmslivebidb1.aws port=5436 dbname=lms user=nguyen_thuy password=EYXWTEfKhb")  or die('Could not connect: ' . pg_last_error());
 	//$dbconn_mysql= mysql_connect("computing.datamart.vn","thuynguyen","thuynguyen") or die(mysql_error());
-	$dbconn_mysql= mysql_connect("127.0.0.1","root","") or die(mysql_error());
+	//$dbconn_mysql= mysql_connect("127.0.0.1","root","") or die(mysql_error());
+	//mysql_select_db("lex_bi") or die("Cannot connect to database: lex_bi");
+	$dbconn_mysql= mysql_connect("10.19.203.242:3303","lex_dev","l3xd3v428@") or die(mysql_error());
 	mysql_select_db("lex_bi") or die("Cannot connect to database: lex_bi");
+
 	ini_set('max_execution_time', 0);
 	switch ($i){
 		case 1:
@@ -945,7 +948,9 @@ for($i=1; $i<12; $i++){
 	// Connecting, selecting database
 	$dbconn = pg_connect("host=thlmslivebidb1.aws port=5436 dbname=lms user=nguyen_thuy password=EYXWTEfKhb")  or die('Could not connect: ' . pg_last_error());
 	//$dbconn_mysql= mysql_connect("computing.datamart.vn","thuynguyen","thuynguyen") or die(mysql_error());
-	$dbconn_mysql= mysql_connect("127.0.0.1","root","") or die(mysql_error());
+	//$dbconn_mysql= mysql_connect("127.0.0.1","root","") or die(mysql_error());
+	//mysql_select_db("lex_bi") or die("Cannot connect to database: lex_bi");
+	$dbconn_mysql= mysql_connect("10.19.203.242:3303","lex_dev","l3xd3v428@") or die(mysql_error());
 	mysql_select_db("lex_bi") or die("Cannot connect to database: lex_bi");
 	ini_set('max_execution_time', 0);
 // Closing connection
