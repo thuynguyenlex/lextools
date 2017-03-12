@@ -8,8 +8,44 @@ if (empty($_SESSION["option"])){
 	$_SESSION["option"]="";}
 if (empty($_SESSION["status"])){ 
 	$_SESSION["status"]="";}
+if (empty($_SESSION["remark"])){
+		$_SESSION["remark"]="";}
 		
 ?>
+ <?php
+			$exp_csv ="";		
+				
+			if ($_SERVER["REQUEST_METHOD"] == "GET") {								
+				//Export downloadable CSV file:
+				if(Empty($_GET["btcsv"])){
+					$expcsv = "no";
+				}else {
+					$expcsv = "yes";				
+					if(strlen(trim(strtoupper($_SESSION["transId"]))) > 0){
+							$trans_id_filter = trim(strtoupper($_SESSION["transId"]));
+							$sql="Select item,status,fromhub,tohub,remark,created_at,user from item_status_tracking
+							where trans_id like '$trans_id_filter'
+							order by created_at,item" ;
+							$res = $mysqli->query($sql);
+							// output headers so that the file is downloaded rather than displayed
+							header('Content-Type: text/csv; charset=utf-8');
+							header('Content-Disposition: attachment; filename=Package_Status.csv');
+							// create a file pointer connected to the output stream
+							$output = fopen('php://output', 'w');
+							// output the column headingsc
+							fputcsv($output,array('TRANSIT ID',"'".$trans_id_filter));
+							fputcsv($output, array('Item', 'Status','From Hub','To Hub','Remark','Created At','User'));
+							// fetch the data
+							// loop over the rows, outputting them
+							while ($row = $res->fetch_assoc()) fputcsv($output, $row);
+							exit();
+					}					
+				
+				}
+			
+			}		
+	
+		?>
 <!DOCTYPE HTML>
 <html>
     <head>
@@ -72,13 +108,16 @@ if (empty($_SESSION["status"])){
 			margin-left: 270px;
 		}
 		.comboxhub{
-			width: 17%;
+			width: 20%;
 			background-color: #f2f2f2;
 		}
 		.combostatus{
 			margin-left: 23px;
 		}
 		.item{
+			margin-left: 27px;
+		}
+		.remark{
 			margin-left: 27px;
 		}
 
@@ -266,13 +305,13 @@ if (empty($_SESSION["status"])){
 
     <body>
       <?php
-			$optionErr = $option = $transId = "";			
+			$optionErr = $option = $transId = $remark= $exit="";			
 			//INSERT:
 			if ($_SERVER["REQUEST_METHOD"] == "POST") {
 				//echo "</br> TransitID test: " .$_SESSION["transId"];
 				//print_r($_SESSION);
 				if (empty($_POST["option"])) {
-					$optionErr = " *Item Type is required";
+					$optionErr = " (*) ";
 				} else {
 					$option = test_input($_POST["option"]);
 					$_SESSION["option"]=$option;
@@ -283,6 +322,15 @@ if (empty($_SESSION["status"])){
 				}else {
 					$status = $_POST["status"];
 					$_SESSION["status"]=$status;
+				}
+				
+				if(Empty($_POST["remark"])){
+					$remark = "";
+					echo "<br/> Remark1";
+				}else {
+					echo "<br/> Remark2";
+					$remark = $_POST["remark"];
+					$_SESSION["remark"]=$remark;
 				}
 				
 				if(Empty($_POST["fromhub"])){
@@ -299,17 +347,16 @@ if (empty($_SESSION["status"])){
 					$_SESSION["tohub"]=$tohub;
 				}			
 			
-				$trans_id= strtoupper($_SESSION["transId"]);
-				$item = strtoupper (trim($_POST["item"]));
+				$trans_id= test_input(strtoupper($_SESSION["transId"]));
+				$item = test_input(strtoupper ($_POST["item"]));
 				$item_type = $option;
 				//$status=$_POST["status"];
-				$remark="";
+				//$remark=$remark;
 				$user =  getenv("REMOTE_ADDR");// getenv("username");//"thuy.nguyen@lazada.vn"; 
 				$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
 				
 				if($item ==""){
-					echo "<script>beep(2);</script>";
-						
+					echo "<script>beep(2);</script>";						
 				}else{
 					if($trans_id==""){
 						echo "<script>beep(2);</script>";
@@ -328,8 +375,9 @@ if (empty($_SESSION["status"])){
 						</div>
 						</div>";
 				
-					}else{
-						if((!preg_match('/[a-zA-Z]*[0-9\.\-]*/',$item))){
+					}else{///[MPDS][a-zA-Z]*[0-9\.\-]*/
+						if(check_spec_char($item)){
+							$exit = true;
 							echo "<script>beep(2);</script>";
 							echo "<div id=myModal class='modal'>
 							<div class='modal-content'>
@@ -339,17 +387,39 @@ if (empty($_SESSION["status"])){
 							</div>
 							<div class='modal-body'>
 							<h3>Can't save for this item</h3>
-							<h3>Item is not correct format. Accept characters, number and - or_ </h3>
+							<h3>Item is not correct format because It has a sepecial character</h3>
 							</div>
 							<div class='modal-footer'>
 							</div>
 							</div>
 							</div>";
-						}else {
+							
+						}
+						if($option=="package"){//Validate:
+							if((!preg_match('/^[MPDS]+[a-zA-Z0-9]/',$item)) or strlen($item)<10){
+								$exit = true;
+								echo "<script>beep(2);</script>";
+								echo "<div id=myModal class='modal'>
+								<div class='modal-content'>
+								<div class='modal-header'>
+								<span class='close'>&times;</span>
+								<h2>$item</h2>
+								</div>
+								<div class='modal-body'>
+								<h3>Can't save for this item</h3>
+								<h3>Item is not correct format. It should content MPDS - chars - number</h3>
+								</div>
+								<div class='modal-footer'>
+								</div>
+								</div>
+								</div>";								
+							}
+						}
+						//INSERT:
+						if($exit!=true){
 							$query ="Insert into item_status_tracking (trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at)
 							value ('$trans_id','$item','$item_type','$status', '$fromhub','$tohub','$remark','$user','$create_at');";
 							$res = $mysqli->query($query);
-							//echo "<br/> Query: " .$res;
 							if($res == ""){
 								echo "<script>beep(2);</script>";
 								echo "<div id=myModal class='modal'>
@@ -370,7 +440,7 @@ if (empty($_SESSION["status"])){
 							}else {
 								echo "<script>beep(1);</script>";
 							}
-						}
+						}										
 					}			
 				}
 			}
@@ -378,14 +448,13 @@ if (empty($_SESSION["status"])){
 				if (empty($_GET["generate"])) {				
 				} else {					
 					if(isset($_GET["transId"]) and $_GET["generate"]="Generate" and ($_GET["transId"]<>$_SESSION["transId"])){
-						$_SESSION["transId"]=$_GET["transId"];
+						$_SESSION["transId"]= strtoupper(test_input($_GET["transId"]));
 						$trans_id_filter = $_SESSION["transId"];
 					}else {
 						$_SESSION["transId"]= date_create(date("Y-m-d h:i:s A")) ->format("ymdhis");						
 					}			
 				}
-						
-				
+
 				//DELETE:
 				if(isset($_GET["item"]) && isset($_GET["transId"]) && isset($_GET["action"]) && $_GET["action"]="delete"){
 					$item_del = $_GET["item"];
@@ -408,58 +477,35 @@ if (empty($_SESSION["status"])){
 				
 			}
 				
-			function test_input($data) {
+			function test_input($data) {				
 				$data = trim($data);
 				$data = stripslashes($data);
 				$data = htmlspecialchars($data);
 				return $data;
 			}
-			
+			function check_spec_char($data){
+				$spec_chars = array("$", "&", "#","'","@","%","!","~","`","^","*","(",")");
+				foreach ($spec_chars as $sp ){
+					if(strpos($data,$sp)){
+						return true;
+					}					
+				}
+				return false ;
+			}
+
 		?>
         <h2 style="color:#DF7401;">PACKAGE STATUS TRACKING</h2>
         <p align="right"><a href="index.php">Home</a></p>      
         <p align="right"><a href="package/packgstatussearching.php">Package status searching </a></p>       	
 	    <form method="get" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >
-	       	Transit Id: <a style="margin-left: -3px; "></a>
+	       	Transit Id <a style="margin-left: 3px; "></a>
 	       	<input type="text" name="transId" class="txttransid" value="<?php echo $_SESSION["transId"];?>"> 
 	    	<input type="submit" name="generate" value="Generate" class="button">
+	    	<input type="submit" name="btcsv" value="CSV" class="button">
 		    <br/>
 	     </form>
- 
-       	<form method="post" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >	       	
-	        Item:  <a style="margin-left:23px; "></a>
-	        <input type="text" name="item" class="item"/>     
-			
-			
-			<?php 
-				$option = $_SESSION["option"];
-				if(empty ($option)){
-					echo "<input type=radio name=option checked value=package>Package Number";
-					echo "<input type=radio name=option value=tracking>Tracking Id";
-					echo "<input type=radio name=option value=runsheet>Runsheet";
-				}else{
-					if (isset($option) && $option=="package") {
-						echo "<input type=radio name=option checked value=package>Package Number";					
-					}else{
-						echo "<input type=radio name=option value=package>Package Number";
-					}
-					if (isset($option) && $option=="tracking") {
-						echo "<input type=radio name=option checked value=tracking>Tracking Number";
-					}else{
-						echo "<input type=radio name=option value=tracking>Tracking Id";
-					}
-					if (isset($option) && $option=="runsheet") {
-						echo "<input type=radio name=option checked value=runsheet>Runsheet";
-					}else{
-						echo "<input type=radio name=option value=runsheet>Runsheet";
-					}			
-				
-				}
-				
-				
-			?>
-			<span><?php echo $optionErr;?></span> 
-			<br/>
+ 		<form method="post" action ="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]);?>" >	       	
+	        
 			Status: 
 			<?php 
 							
@@ -515,11 +561,54 @@ if (empty($_SESSION["status"])){
 			echo "</select>";
 			
 			?>
-			
+			<br/>
+			Item:  <a style="margin-left:23px; "></a>
+	        <input type="text" name="item" class="item"/>    
+			<span><?php echo $optionErr;?></span> 						
+			<?php 
+				$option = $_SESSION["option"];
+				if(empty ($option)){
+					echo "<input type=radio name=option checked value=package>Package Number";
+					echo "<input type=radio name=option value=tracking>Tracking Id";
+					echo "<input type=radio name=option value=runsheet>Runsheet";
+				}else{
+					if (isset($option) && $option=="package") {
+						echo "<input type=radio name=option checked value=package>Package Number";					
+					}else{
+						echo "<input type=radio name=option value=package>Package Number";
+					}
+					if (isset($option) && $option=="tracking") {
+						echo "<input type=radio name=option checked value=tracking>Tracking Number";
+					}else{
+						echo "<input type=radio name=option value=tracking>Tracking Id";
+					}
+					if (isset($option) && $option=="runsheet") {
+						echo "<input type=radio name=option checked value=runsheet>Runsheet";
+					}else{
+						echo "<input type=radio name=option value=runsheet>Runsheet";
+					}			
+				
+				}
+								
+			?>
 			<br/><br/>
-		 
-        </form>        
-        <div>
+		    
+        </form> 
+   
+        <div>	      
+        <?php 
+	        $trans_id_filter = $_SESSION["transId"] ;
+	        $sql="SELECT count(*) as cnt from item_status_tracking WHERE trans_id='$trans_id_filter'" ;
+	        $res = $mysqli->query($sql);
+	        if($res->num_rows >0){
+	        	$res->data_seek($row_no);
+	        	$row = $res->fetch_assoc();
+	        	echo "<p>Number Items: ($row[cnt]) Please input Package Number for DO issues  </p>";
+	        }else{
+	        	echo "<p>Number Items: (0) Please input Package Number for DO issues  </p>";
+	        }
+        ?>
+          
         <table cellspacing="0" cellpadding="3" rules="cols" id="gvwcategory" class="table-display">
         	<tbody>
         		<tr class="table-header">
@@ -548,7 +637,7 @@ if (empty($_SESSION["status"])){
                             <?php 
                             $trans_id_filter = $_SESSION["transId"] ;
                             $sql="Select trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at from item_status_tracking
-                            where trans_id ='$trans_id_filter' order by created_at desc limit 100" ;
+                            where trans_id ='$trans_id_filter' order by created_at desc limit 30" ;
                             //echo $sql;
                             $res = $mysqli->query($sql);
                             if($res->num_rows >0){

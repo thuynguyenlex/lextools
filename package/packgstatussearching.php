@@ -443,7 +443,59 @@ if(Empty($fromhub) ){
 			<br/><br/>	
 			 
     	</form>          
-        <div>        
+        <div>
+       
+          <?php
+	          if(strlen(trim($transId)) == 0){
+	          	$trans_id_filter ='%';
+	          }else{
+	          	$trans_id_filter = $transId;
+	          }
+	          
+	          if(strlen(trim($item)) == 0){
+	          	$item_filter ='%';
+	          }else{
+	          	$item_filter =$item;
+	          }
+	          if(strlen(trim($fromdate)) == 0){
+	          	$fromdate_filter = date("Y-m-d 00:00:00");;
+	          }else{
+	          	//$fromdate_filter =$fromdate;
+	          	$fromdate_filter = date("Y-m-d 00:00:00", strtotime($fromdate));
+	          }
+	          if(strlen(trim($todate)) == 0){
+	          	$todate_filter =date("Y-m-d 23:59:59");
+	          }else{
+	          	$todate_filter =date("Y-m-d 23:59:59", strtotime($todate));
+	          }
+	          if(trim($status)=='ALL' or trim($status)==''){
+	          	$status_filter ="%";
+	          }else{
+	          	$status_filter = $status;
+	          }
+	          if(trim($fromhub)=='ALL' or trim($fromhub)==''){
+	          	$frmhub_filter ="%";
+	          }else{
+	          	$frmhub_filter = $fromhub;
+	          }
+	          if(trim($tohub)=='ALL' or trim($tohub)==''){
+	          	$tohub_filter ="%";
+	          }else{
+	          	$tohub_filter = $tohub;
+	          }
+	        $sql="Select count(*) as cnt from item_status_tracking 
+									where trans_id like '%$trans_id_filter%' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter' 
+                         			and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
+                         			order by created_at,item" ;
+	        $res = $mysqli->query($sql);
+	        if($res->num_rows >0){
+	        	$res->data_seek($row_no);
+	        	$row = $res->fetch_assoc();
+	        	echo "<p>Number Items: ($row[cnt])</p>";
+	        }else{
+	        	echo "<p>Number Items: (0)</p>";
+	        }
+        ?>        
         <table cellspacing="0" cellpadding="3" rules="cols" id="gvwcategory" class="table-display">
         	<tbody>
         		<tr class="table-header">
@@ -461,49 +513,11 @@ if(Empty($fromhub) ){
                                    <!-- <th scope="col">Action</th>    -->                                 
                             
                             <?php 
-                            
-                            if(strlen(trim($transId)) == 0){
-                            	$trans_id_filter ='%';
-                            }else{
-                            	$trans_id_filter = $transId;
-                            }
-                            
-                            if(strlen(trim($item)) == 0){
-                            	$item_filter ='%';
-                            }else{
-                            	$item_filter =$item;
-                            }
-                            if(strlen(trim($fromdate)) == 0){
-                            	$fromdate_filter = date("Y-m-d 00:00:00");;
-                            }else{
-                            	//$fromdate_filter =$fromdate;
-                            	$fromdate_filter = date("Y-m-d 00:00:00", strtotime($fromdate));
-                            }
-                            if(strlen(trim($todate)) == 0){
-                            	$todate_filter =date("Y-m-d 23:59:59");
-                            }else{
-                            	$todate_filter =date("Y-m-d 23:59:59", strtotime($todate));
-                            }
-                            if(trim($status)=='ALL' or trim($status)==''){
-                            	$status_filter ="%";
-                            }else{
-                            	$status_filter = $status;
-                            }
-                            if(trim($fromhub)=='ALL' or trim($fromhub)==''){
-                            	$frmhub_filter ="%";
-                            }else{
-                            	$frmhub_filter = $fromhub;
-                            }
-                            if(trim($tohub)=='ALL' or trim($tohub)==''){
-                            	$tohub_filter ="%";
-                            }else{
-                            	$tohub_filter = $tohub;
-                            }
-                            
+
                          	$sql="Select trans_id,item,item_type,status,fromhub,tohub,remark,user,created_at from item_status_tracking 
 									where trans_id like '%$trans_id_filter%' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter' 
                          			and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
-                         			order by created_at,item" ;
+                         			order by trans_id,created_at,item limit 100" ;
                          	//echo "<br/>".$sql;
 							$res = $mysqli->query($sql);
 							//echo "<br/> Data search ************************";												
