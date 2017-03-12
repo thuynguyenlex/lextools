@@ -275,7 +275,7 @@ if (empty($_SESSION["statusrsob"])){
 
     <body>
       <?php      
-      	$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status=$typersob= $res="";
+      	$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status=$typersob= $res= $exit="";
       	//INSERT:
       	if ($_SERVER["REQUEST_METHOD"] == "POST") {      		
       		if (empty($_POST["option"])) {
@@ -310,6 +310,7 @@ if (empty($_SESSION["statusrsob"])){
       	
       			}else{
       				if($_SESSION["statusrsob"]!="PACK"){
+      					$exit = true;
       					echo "<script>beep(2);</script>";
       					echo "<div id=myModal class='modal'>
       					<div class='modal-content'>
@@ -323,56 +324,103 @@ if (empty($_SESSION["statusrsob"])){
       					<div class='modal-footer'>
       					</div>
       					</div>
-      					</div>";
-      					 
+      					</div>";      					
       				}else{      					
-      				
-	      				if((!preg_match('/[a-zA-Z]*[0-9\.\-]*/',$item))){
-	      					echo "<script>beep(2);</script>";
-	      					echo "<div id=myModal class='modal'>
-	      					<div class='modal-content'>
-	      					<div class='modal-header'>
-	      					<span class='close'>&times;</span>
-	      					<h2>$item</h2>
-	      					</div>
-	      					<div class='modal-body'>
-	      					<h3>Can't save for this item</h3>
-	      					<h3>Item is not correct format. Accept characters, number and - or_ </h3>
-	      					</div>
-	      					<div class='modal-footer'>
-	      					</div>
-	      					</div>
-	      					</div>";
-	      				}else { 
-	      					//Init data:
-	      					$trans_id =$_SESSION["rsob"];      					
-	      					$item_type=$_SESSION["optionrsob"];      				
-	      					$user = getenv("REMOTE_ADDR");//getenv("username");
-	      					$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');	      					     					
-	      					$query ="INSERT INTO runsheet_detail(id,item,item_type,status,user_created,user_created_at)
-								VALUES ('$trans_id','$item','$item_type','SEND', '$user','$create_at')";
-	      					$res = $mysqli->query($query);	      				
-	      					if($res == ""){
-	      						echo "<script>beep(2);</script>";
-	      						echo "<div id=myModal class='modal'>
-	      						<div class='modal-content'>
-	      						<div class='modal-header'>
-	      						<span class='close'>&times;</span>
-	      						<h2>$item</h2>
-	      						</div>
-	      						<div class='modal-body'>
-	      						<h3>Can't save for this item</h3>
-	      						<h3>Item is existed in this transit $trans_id already! (checking by yourself) </h3>
-	      						<h3>Or have a problem while Inserting to database (reporting to PMP team)</h3>
-	      						</div>
-	      						<div class='modal-footer'>
-	      						</div>
-	      						</div>
-	      						</div>";
-	      					}else {
-	      						echo "<script>beep(1);</script>";
-	      					}
-	      				}
+      					if(check_spec_char($item)){
+      						$exit = true;
+      						echo "<script>beep(2);</script>";
+      						echo "<div id=myModal class='modal'>
+      						<div class='modal-content'>
+      						<div class='modal-header'>
+      						<span class='close'>&times;</span>
+      						<h2>$item</h2>
+      						</div>
+      						<div class='modal-body'>
+      						<h3>Can't save for this item</h3>
+      						<h3>Item is not correct format because It has a sepecial character</h3>
+      						</div>
+      						<div class='modal-footer'>
+      						</div>
+      						</div>
+      						</div>";      							
+      					}
+      					if($option=="package"){//Validate:
+      						if((!preg_match('/^[MPDS]+[a-zA-Z0-9]/',$item)) or strlen($item)<10){
+      							$exit = true;
+      							echo "<script>beep(2);</script>";
+      							echo "<div id=myModal class='modal'>
+      							<div class='modal-content'>
+      							<div class='modal-header'>
+      							<span class='close'>&times;</span>
+      							<h2>$item</h2>
+      							</div>
+      							<div class='modal-body'>
+      							<h3>Can't save for this item</h3>
+      							<h3>Item is not correct format. It should content MPDS - chars - number</h3>
+      							</div>
+      							<div class='modal-footer'>
+      							</div>
+      							</div>
+      							</div>";
+      						}
+      					}
+      					//INSERT:
+      					if($exit!=True){
+      						//Init data:
+      						$trans_id =$_SESSION["rsob"];
+      						$item_type=$_SESSION["optionrsob"];
+      						$user = getenv("REMOTE_ADDR");//getenv("username");
+      						$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
+      						//Check Open Transit:
+      						$sql="SELECT id,item,item_type,status,user_created FROM runsheet_detail 
+      						WHERE item='$item' AND status IN ('LOST','SEND') ";
+      						$res = $mysqli->query($sql);
+      						if($res->num_rows >0){//Existed in an Open Runsheet
+      							$res->data_seek(0);
+      							$row = $res->fetch_assoc();
+      							echo "<script>beep(2);</script>";
+      							echo "<div id=myModal class='modal'>
+      							<div class='modal-content'>
+      							<div class='modal-header'>
+      							<span class='close'>&times;</span>
+      							<h2>$item</h2>
+      							</div>
+      							<div class='modal-body'>
+      							<h3>Can't save for this item</h3>
+      							<h3>Item is existed in an open runsheet $row[id] already! (checking by yourself) </h3>      							
+      							</div>
+      							<div class='modal-footer'>
+      							</div>
+      							</div>
+      							</div>";
+      						}else{
+      							//Insert after validating:
+      							$query ="INSERT INTO runsheet_detail(id,item,item_type,status,user_created,user_created_at)
+      							VALUES ('$trans_id','$item','$item_type','SEND', '$user','$create_at')";
+      							$res = $mysqli->query($query);
+      							if($res == ""){
+      								echo "<script>beep(2);</script>";
+      								echo "<div id=myModal class='modal'>
+      								<div class='modal-content'>
+      								<div class='modal-header'>
+      								<span class='close'>&times;</span>
+      								<h2>$item</h2>
+      								</div>
+      								<div class='modal-body'>
+      								<h3>Can't save for this item</h3>
+      								<h3>Item is existed in this runsheet $trans_id already! (checking by yourself) </h3>
+      								</div>
+      								<div class='modal-footer'>
+      								</div>
+      								</div>
+      								</div>";
+      							}else {
+      								echo "<script>beep(1);</script>";
+      							}
+      						}
+      						
+      					}
+	      				
       				}
       			}
       		}
@@ -528,6 +576,15 @@ if (empty($_SESSION["statusrsob"])){
       		$data = stripslashes($data);
       		$data = htmlspecialchars($data);
       		return $data;
+      	}
+      	function check_spec_char($data){
+      		$spec_chars = array("$", "&", "#","'","@","%","!","~","`","^","*","(",")");
+      		foreach ($spec_chars as $sp ){
+      			if(strpos($data,$sp)){
+      				return true;
+      			}
+      		}
+      		return false ;
       	}
 		?>
         <h2 style="color:#DF7401;">RUNSHEET OUTBOUND</h2>

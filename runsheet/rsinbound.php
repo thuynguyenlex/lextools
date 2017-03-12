@@ -291,6 +291,7 @@ if (empty($_SESSION["statusrsib"])){
       			echo "<script>beep(2);</script>";      			
       		}else{
       			if($trans_id==""){
+      				$exit = true;
       				echo "<script>beep(2);</script>";
       				echo "<div id=myModal class='modal'>
       				<div class='modal-content'>
@@ -308,7 +309,8 @@ if (empty($_SESSION["statusrsib"])){
       				</div>";
       	
       			}else{
-      				if((!preg_match('/[a-zA-Z]*[0-9\.\-]*/',$item))){
+      				if(check_spec_char($item)){
+      					$exit = true;
       					echo "<script>beep(2);</script>";
       					echo "<div id=myModal class='modal'>
       					<div class='modal-content'>
@@ -318,21 +320,23 @@ if (empty($_SESSION["statusrsib"])){
       					</div>
       					<div class='modal-body'>
       					<h3>Can't save for this item</h3>
-      					<h3>Item is not correct format. Accept characters, number and - or_ </h3>
+      					<h3>Item is not correct format because It has a sepecial character</h3>
       					</div>
       					<div class='modal-footer'>
       					</div>
       					</div>
       					</div>";
-      				}else { 
+      				}
+      				      				
+      				if($exit !=true) 
       					if($_SESSION["statusrsib"]!="PACK"){      					
 	      					//RECEIVED linehaule status:     					     				
 	      					$trans_id =$_SESSION["rsib"];      					
 	      					$item_type=$_SESSION["optionrsib"];      				
-	      					$user = getenv("REMOTE_ADDR");//getenv("username");      								
+	      					$user = getenv("REMOTE_ADDR");//getenv("username");  id ='$trans_id' and      								
 	      					//Check existed?
 	      					$query ="SELECT id,item,item_type,status,user_created,user_created_at,user_received,user_received_at 
-								FROM runsheet_detail where  id ='$trans_id' and item='$item'";		      				
+								FROM runsheet_detail where  item='$item'";		      				
 	      					$res = $mysqli->query($query);	      					
 	      					if($res == ""){
 	      						echo "<script>beep(2);</script>";
@@ -352,10 +356,64 @@ if (empty($_SESSION["statusrsib"])){
 	      						</div>";
 	      					}else {	      						
 	      						if( $res->num_rows > 0){
-	      							$res->data_seek(0);
-	      							$row = $res->fetch_assoc();
-	      							$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');	      					
-	      							if(strtoupper( $row['status'])=='SEND'){//Update Received
+	      							//$res->data_seek(0);
+	      							//$row = $res->fetch_assoc();
+	      							$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');	
+	      							//$nb = $res->num_rows;
+	      							if($res->num_rows==1){	      								
+	      								$res->data_seek(0);
+	      								$row = $res->fetch_assoc();
+	      								if($row['id']==$trans_id and strtoupper( $row['status'])=='SEND'){
+	      									$valid = true;
+	      								}else {
+	      									//Received already or belong to another RS => warning users
+	      									$valid = false;
+	      									echo "<script>beep(2);</script>";
+	      									echo "<div id=myModal class='modal'>
+	      									<div class='modal-content'>
+	      									<div class='modal-header'>
+	      									<span class='close'>&times;</span>
+	      									<h2>$item</h2>
+	      									</div>
+	      									<div class='modal-body'>
+	      									<h3>RECEIVED Already or belong to another runsheet!</h3>
+	      									<h3>Item is in the Runsheet= $row[id] and Status= $row[status]</h3>
+	      									</div>
+	      									<div class='modal-footer'>
+	      									</div>
+	      									</div>
+	      									</div>";
+	      								}
+	      							}else {//item has many RS
+	      								$valid=false;
+	      								for ($row_no =0; $row_no < $res->num_rows; $row_no++) {
+	      									$res->data_seek($row_no);
+	      									$row = $res->fetch_assoc();
+	      									if($row['id']==$trans_id and strtoupper( $row['status'])=='SEND'){
+	      										$valid = true;
+	      										break;
+	      									}
+	      								}
+	      								if($valid == false){
+	      									echo "<script>beep(2);</script>";
+	      									echo "<div id=myModal class='modal'>
+	      									<div class='modal-content'>
+	      									<div class='modal-header'>
+	      									<span class='close'>&times;</span>
+	      									<h2>$item</h2>
+	      									</div>
+	      									<div class='modal-body'>
+	      									<h3>RECEIVED Already or belong to another runsheet!</h3>
+	      									<h3>Item is in the Runsheet= $row[id] and Status= $row[status]</h3>
+	      									</div>
+	      									<div class='modal-footer'>
+	      									</div>
+	      									</div>
+	      									</div>";
+	      								}
+	      							}
+	      							      							
+	      							if($valid == true ){//Update Received
 	      								$query ="UPDATE runsheet_detail
 	      								SET status='RECEIVE', user_received ='$user', user_received_at = '$create_at'
 	      								WHERE id ='$trans_id' and item='$item';";
@@ -398,22 +456,50 @@ if (empty($_SESSION["statusrsib"])){
 	      								</div>
 	      								</div>";
 	      							}
-	      						}else { //Not eixisted:
-	      							echo "<script>beep(2);</script>";
-	      							echo "<div id=myModal class='modal'>
-	      							<div class='modal-content'>
-	      							<div class='modal-header'>
-	      							<span class='close'>&times;</span>
-	      							<h2>$item</h2>
-	      							</div>
-	      							<div class='modal-body'>
-	      							<h3>Can't Receive for this item</h3>
-	      							<h3>Because Item is NOT existed in the Runsheet $trans_id </h3>
-	      							</div>
-	      							<div class='modal-footer'>
-	      							</div>
-	      							</div>
-	      							</div>";
+	      						}else { //Not eixisted: MISS SCAN => INSERT
+	      							if((!preg_match('/^[MPDS]+[a-zA-Z0-9]/',$item)) or strlen($item)<10){
+	      								$exit = true;
+	      								echo "<script>beep(2);</script>";
+	      								echo "<div id=myModal class='modal'>
+	      								<div class='modal-content'>
+	      								<div class='modal-header'>
+	      								<span class='close'>&times;</span>
+	      								<h2>$item</h2>
+	      								</div>
+	      								<div class='modal-body'>
+	      								<h3>Just allow 'miss scan' for Package only</h3>
+	      								<h3>Item is not correct format. It should content MPDS - chars - number</h3>
+	      								</div>
+	      								<div class='modal-footer'>
+	      								</div>
+	      								</div>
+	      								</div>";
+	      							}
+	      							if($exit !=true){	      								
+	      								$query ="INSERT INTO runsheet_detail(id,item,item_type,status,user_received,user_received_at)
+	      								VALUES ('$trans_id','$item','package','RECEIVE MISS SCAN', '$user','$create_at')";
+	      								$res = $mysqli->query($query);
+	      								if($res == ""){
+	      									echo "<script>beep(2);</script>";
+	      									echo "<div id=myModal class='modal'>
+	      									<div class='modal-content'>
+	      									<div class='modal-header'>
+	      									<span class='close'>&times;</span>
+	      									<h2>$item</h2>
+	      									</div>
+	      									<div class='modal-body'>
+	      									<h3>Can't save for this item</h3>
+	      									<h3>Item is existed in this runsheet $trans_id already! (checking by yourself) </h3>
+	      									</div>
+	      									<div class='modal-footer'>
+	      									</div>
+	      									</div>
+	      									</div>";
+	      								}else {
+	      									echo "<script>beep(1);</script>";
+	      								}
+	      							}
+	      							
 	      						}     					
 	      						
 	      					}
@@ -436,7 +522,7 @@ if (empty($_SESSION["statusrsib"])){
       				}
       			}
       		}
-      	}
+      	
       	if ($_SERVER["REQUEST_METHOD"] == "GET") {
       		if(Empty($_GET["status"])){
       			$statusErr = " *Status is required";
@@ -590,7 +676,16 @@ if (empty($_SESSION["statusrsib"])){
       		$data = stripslashes($data);
       		$data = htmlspecialchars($data);
       		return $data;
-      	}   
+      	} 
+      	function check_spec_char($data){
+      		$spec_chars = array("$", "&", "#","'","@","%","!","~","`","^","*","(",")");
+      		foreach ($spec_chars as $sp ){
+      			if(strpos($data,$sp)){
+      				return true;
+      			}
+      		}
+      		return false ;
+      	}
 		?>
         <h2 style="color:#DF7401;">RUNSHEET INBOUND Checked-in</h2>
         <p align="right"><a href="index.php">Home</a></p>      
