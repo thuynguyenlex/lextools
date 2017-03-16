@@ -1,6 +1,8 @@
 <?php
 	session_start();
-	$_SESSION['track_nb_chk']= null;
+	if(empty($_POST['track_nb'])){
+		$_SESSION['track_nb_chk']="";
+	}
 ?>
 <html>
     <head>
@@ -88,6 +90,12 @@
         <p align="right"><a href="index.php">Click here to go home</a></p>
 		<?php
 			echo $_SESSION['track_nb_chk'];
+			if ($_SERVER['REQUEST_METHOD']=="POST"){
+				if(isset($_POST['track_nb'])){
+					$_SESSION['track_nb_chk']="";
+				}
+				
+			}
 		?>
         <form action="packageroute.php" method="POST">
          Tracking Number <input type="text" name="packg" class="packg" />
@@ -117,7 +125,8 @@
 					$query = "select package.external_id as package_number,tracking_number as tracking_number,
 					external_order_id as order_id,status as current,status_updated_at,
 					contact.name as seller_name,(address.address) as seller_address, hub.name as hub_name,  
-					route.number as Route_Name,package.from_id  as LMS_seller_id,contact.external_id as OMS_seller_id					
+					route.number as Route_Name,package.from_id  as LMS_seller_id,contact.external_id as OMS_seller_id,
+					package.cod as COD
 					from package left join contact on contact.id = package.from_id 
 					left join pickup_point as sender on sender.id = contact.id
 					left join contact hub on hub.id = sender.hub_id
@@ -161,7 +170,9 @@
 							echo "\t<tr>\n";
 							echo "\t\t<td>LMS Seller Id: \t\t<td>$line[9]";
 							echo "\t<tr>\n";
-							echo "\t\t<td>OMS Seller Id: \t\t<td>$line[10]";												
+							echo "\t\t<td>OMS Seller Id: \t\t<td>$line[10]";
+							echo "\t<tr>\n";
+							echo "\t\t<td>COD: \t\t<td>$line[11]";
 						echo "\t</tr>\n";						
 					}
 					echo "</table>\n";

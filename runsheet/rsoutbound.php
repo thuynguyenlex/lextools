@@ -345,7 +345,7 @@ if (empty($_SESSION["statusrsob"])){
       						</div>";      							
       					}
       					if($option=="package"){//Validate:
-      						if((!preg_match('/^[MPDS]+[a-zA-Z0-9]/',$item)) or strlen($item)<10){
+      						if((!preg_match('#^MPDS#',$item)) or strlen($item)<14){
       							$exit = true;
       							echo "<script>beep(2);</script>";
       							echo "<div id=myModal class='modal'>

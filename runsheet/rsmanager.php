@@ -8,7 +8,26 @@ if(Empty($fromhub) ){
 ?>
  <?php
 			$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status=$type =$exp_csv = $date_filter ="";	
-						
+			
+			if ($_SERVER["REQUEST_METHOD"] == "GET") {
+				if(!empty($_GET["action"]) and ($_GET["action"]=="CSV") ){
+					$trans_id_filter = $_GET["transId"];							 	
+					 $sql="SELECT id,item,item_type,status,user_created,user_created_at,user_received,user_received_at,user_lost,user_lost_at
+						FROM runsheet_detail WHERE id='$trans_id_filter'";					
+					 $res = $mysqli->query($sql);					 
+					 // output headers so that the file is downloaded rather than displayed
+					 header('Content-Type: text/csv; charset=utf-8');
+					 header('Content-Disposition: attachment; filename=Package_Status.csv');
+					 // create a file pointer connected to the output stream
+					 $output = fopen('php://output', 'w');
+					 // output the column headingsc
+					 fputcsv($output, array('RS', 'Item','Item Type','Status','User Created','Created At','User Received','Received At','User Lost','Lost At'));
+					 // fetch the data
+					 // loop over the rows, outputting them
+					 while ($row = $res->fetch_assoc()) fputcsv($output, $row);
+					 exit();					 
+				}
+			}
 			if(strlen(trim($fromdate))==0){
 				$fromdate=date("m/d/Y");
 			}
@@ -59,6 +78,11 @@ if(Empty($fromhub) ){
 					$todate="";
 				}else {
 					$todate=$_POST["todate"];
+				}
+				if(Empty($_POST["item"])){
+					$item="";
+				}else {
+					$item=$_POST["item"];
 				}
 				//Export downloadable CSV file:
 				if(Empty($_POST["btcsv"])){
@@ -124,32 +148,7 @@ if(Empty($fromhub) ){
 							$date_filter ="";
 					}
 					
-				/*		
-				//	$sql="Select item,item_type,status,trans_id,fromhub,tohub,remark,user,created_at from item_status_tracking
-				//	where trans_id like '$trans_id_filter' and item like '$item_filter' and created_at between '$fromdate_filter' and '$todate_filter'
-				//	and status like '$status_filter' and fromhub like '$frmhub_filter' and tohub like '$tohub_filter'
-				//	order by created_at,item" ;
-					
-					$sql="SELECT  id,from_hub,to_hub,type,status_rs,user_created,user_created_at,user_updated,user_updated_at,
-						user_dispatch,user_dispatch_at,user_done,user_done_at
-						FROM lex_db.runsheet_head
-						WHERE id like '$trans_id_filter' and from_hub like '$frmhub_filter' and to_hub like '$tohub_filter' 
-						and type like '$type_filter' and status_rs like '$status_filter' $date_filter  ";
-					echo "<br/> Select: " .$sql;
-					
-					$res = $mysqli->query($sql);				
-					// output headers so that the file is downloaded rather than displayed
-					header('Content-Type: text/csv; charset=utf-8');
-					header('Content-Disposition: attachment; filename=Package_Status.csv');
-					// create a file pointer connected to the output stream
-					$output = fopen('php://output', 'w');
-					// output the column headingsc
-					fputcsv($output, array('Item', 'Item Type','Status','Transit Id','From Hub','To Hub','Remark','User','Created At'));
-					// fetch the data
-					// loop over the rows, outputting them
-					while ($row = $res->fetch_assoc()) fputcsv($output, $row);
-					exit();
-					*/
+				
 				}
 				//echo "<br/>item: " .$item;
 				//echo "<br/>transit id: " .$transId;
@@ -428,8 +427,8 @@ if(Empty($fromhub) ){
 			<input type="submit" name="btsearch" value="Search" class="button"><br/> 
 			Runsheet# <a style="margin-left:1px; "></a>
 			<input type="text" name="transid" class="transid" class="txttransid" value="<?php echo $transId;?>"> 
-			------:  <a style="margin-left:16px; "></a>
-			<input type="text" name="item" class="item" value="<?php echo $item;?>" disabled/> 			
+			Item:  <a style="margin-left:21px; "></a>
+			<input type="text" name="item" class="item" value="<?php echo $item;?>" /> 			
 			<input type="submit" name="btcsv" value="CSV" class="button"><br/>
 			
 			<?php 		
@@ -506,11 +505,12 @@ if(Empty($fromhub) ){
         		<tr class="table-header">
                    <!--<th scope="col" class="cbxSelectAll"> <input id="cbxSelectAll" type="checkbox" name="cbxSelectAll"> </th>-->
                           <th scope="col">Nb</th>
-                             <th scope="col"">Runsheet</th>
+                             <th scope="col">Runsheet</th>
                                     <th scope="col">From Hub</th>
                                     <th scope="col"><a>To Hub</a></th>
                                     <th scope="col">RS Type</th>
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Status</th>
+                                    <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Nb Item</th>
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Create</th>
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Create At</th>
                                     <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Update</th>
@@ -569,30 +569,40 @@ if(Empty($fromhub) ){
                           
                             switch (trim($status)){
                             	case "ALL":
-                            		$date_filter =" and user_created_at between '$fromdate_filter' and '$todate_filter' order by user_created_at desc";
+                            		$date_filter =" and h.user_created_at between '$fromdate_filter' and '$todate_filter' ";
+                            		$order_filter =" order by h.user_created_at desc";
                             		break;
                             	case "PACK":
-                            		$date_filter =" and user_created_at between '$fromdate_filter' and '$todate_filter'  order by user_created_at desc";
+                            		$date_filter =" and h.user_created_at between '$fromdate_filter' and '$todate_filter' ";
+                            		$order_filter=" order by h.user_created_at desc";
                             		break;
                             	case "DISPATCH":
-                            		$date_filter =" and user_dispatch_at between '$fromdate_filter' and '$todate_filter' order by user_dispatch_at desc  ";
+                            		$date_filter =" and h.user_dispatch_at between '$fromdate_filter' and '$todate_filter' ";
+                            		$order_filter=" order by h.user_dispatch_at desc ";
                             		break;
                             	case "DONE":
-                            		$date_filter =" and user_done_at between '$fromdate_filter' and '$todate_filter' order by user_done_at desc ";
+                            		$date_filter =" and h.user_done_at between '$fromdate_filter' and '$todate_filter'  ";
+                            		$order_filter=" order by h.user_done_at desc";
                             		break;
                             	default:
                             		$date_filter ="";
+                            		$order_filter="";
                             }                            	
                                                         	
-                            $sql="SELECT  id,from_hub,to_hub,type,status_rs,user_created,user_created_at,user_updated,user_updated_at,
-                            user_dispatch,user_dispatch_at,user_done,user_done_at
-                            FROM lex_db.runsheet_head
-                            WHERE id like '%$trans_id_filter%' and from_hub like '$frmhub_filter' and to_hub like '$tohub_filter'
-                            and type like '$type_filter' and status_rs like '$status_filter' $date_filter  ";
-                           // echo "<br/> Select: " .$sql;                          
+                            $sql = "SELECT  h.id,from_hub,to_hub,type,status_rs,h.user_created,h.user_created_at,h.user_updated,h.user_updated_at,
+                            h.user_dispatch,h.user_dispatch_at,h.user_done,h.user_done_at,
+                            count(d.item) as NbItem
+                            FROM lex_db.runsheet_head  as h
+                            inner join lex_db.runsheet_detail as d 
+                            on h.id = d.id
+							 WHERE h.id like '%$trans_id_filter%' and h.from_hub like '$frmhub_filter' and h.to_hub like '$tohub_filter'
+                            and h.type like '$type_filter' and d.item like '$item_filter' and h.status_rs like '$status_filter' $date_filter 
+                            Group by h.id,from_hub,to_hub,type,status_rs,h.user_created,h.user_created_at,h.user_updated,h.user_updated_at,
+                            h.user_dispatch,h.user_dispatch_at,h.user_done,h.user_done_at $order_filter ";
+                           // echo $sql;
                          	//echo "<br/>".$sql;
 							$res = $mysqli->query($sql);
-							//echo "<br/> Data search ************************";												
+							//echo "<br/> Data search *******************************";												
 								if($res->num_rows >0){
 									//echo "<br/> View Table:************************";
 									for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
@@ -606,6 +616,7 @@ if(Empty($fromhub) ){
 										echo "<td>$row[to_hub]</td>";
 										echo "<td>$row[type]</td>";
 										echo "<td>$row[status_rs]</td>";
+										echo "<td>$row[NbItem]</td>";
 										echo "<td>$row[user_created]</td>";
 										echo "<td>$row[user_created_at]</td>";
 										echo "<td>$row[user_updated]</td>";
@@ -626,7 +637,8 @@ if(Empty($fromhub) ){
 										if($row["status_rs"]=="DONE"){											
 											echo "<a target = '_blank' href=http://10.19.203.242/lextools/runsheet/rsinbound.php?transId=$row[id]>VIEW</a>";
 											//echo "<a target = '_blank' href=http://localhost/lextools/runsheet/rsinbound.php?transId=$row[id]>VIEW</a>";
-										}										
+										}
+										echo "  <a href=?action=CSV&&transId=$row[id]> CSV</a>";
 										echo "</td>";
 										echo "</tr>";										
 									}

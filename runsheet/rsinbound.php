@@ -275,7 +275,8 @@ if (empty($_SESSION["statusrsib"])){
 
     <body>
       <?php      
-      	$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status= $res="";
+      	$optionErr = $option = $transId = $item = $fromdate= $todate=$fromhub = $tohub= $status= $res= "";
+      	$exit= false;
       	//INSERT:
       	if ($_SERVER["REQUEST_METHOD"] == "POST") {      		
       		if (empty($_POST["option"])) {
@@ -390,7 +391,7 @@ if (empty($_SESSION["statusrsib"])){
 	      									$res->data_seek($row_no);
 	      									$row = $res->fetch_assoc();
 	      									if($row['id']==$trans_id and strtoupper( $row['status'])=='SEND'){
-	      										$valid = true;
+	      										$valid = true;// Existed in this RS
 	      										break;
 	      									}
 	      								}
@@ -449,7 +450,7 @@ if (empty($_SESSION["statusrsib"])){
 	      								</div>
 	      								<div class='modal-body'>
 	      								<h3>RECEIVED Already!</h3>
-	      								<h3>Item is Received already for the Runsheet $trans_id </h3>      							
+	      								<h3>Item is Received already or belong to another runsheet! </h3>      							
 	      								</div>
 	      								<div class='modal-footer'>
 	      								</div>
@@ -457,7 +458,7 @@ if (empty($_SESSION["statusrsib"])){
 	      								</div>";
 	      							}
 	      						}else { //Not eixisted: MISS SCAN => INSERT
-	      							if((!preg_match('/^[MPDS]+[a-zA-Z0-9]/',$item)) or strlen($item)<10){
+	      							if((!preg_match('#^MPDS#',$item)) or strlen($item)<10){
 	      								$exit = true;
 	      								echo "<script>beep(2);</script>";
 	      								echo "<div id=myModal class='modal'>
@@ -475,7 +476,9 @@ if (empty($_SESSION["statusrsib"])){
 	      								</div>
 	      								</div>";
 	      							}
-	      							if($exit !=true){	      								
+	      							if($exit !=true){
+	      								$user = getenv("REMOTE_ADDR");//getenv("username");
+	      								$create_at= date_create(date("Y-m-d h:i:s A"))->format('Y-m-d H:i:s');
 	      								$query ="INSERT INTO runsheet_detail(id,item,item_type,status,user_received,user_received_at)
 	      								VALUES ('$trans_id','$item','package','RECEIVE MISS SCAN', '$user','$create_at')";
 	      								$res = $mysqli->query($query);
@@ -488,8 +491,8 @@ if (empty($_SESSION["statusrsib"])){
 	      									<h2>$item</h2>
 	      									</div>
 	      									<div class='modal-body'>
-	      									<h3>Can't save for this item</h3>
-	      									<h3>Item is existed in this runsheet $trans_id already! (checking by yourself) </h3>
+	      									<h3>Can't receive this item</h3>
+	      									<h3>There is a problem during getting data (report to PMP team) </h3>    
 	      									</div>
 	      									<div class='modal-footer'>
 	      									</div>
@@ -497,6 +500,20 @@ if (empty($_SESSION["statusrsib"])){
 	      									</div>";
 	      								}else {
 	      									echo "<script>beep(1);</script>";
+	      									echo "<div id=myModal class='modal'>
+	      									<div class='modal-content'>
+	      									<div class='modal-header'>
+	      									<span class='close'>&times;</span>
+	      									<h2>$item</h2>
+	      									</div>
+	      									<div class='modal-body'>
+	      									<h3>RECEIVE MISS SCAN item</h3>
+	      									<h3>Item is allowed to this RS with status RECEIVE MISS SCAN </h3>
+	      									</div>
+	      									<div class='modal-footer'>
+	      									</div>
+	      									</div>
+	      									</div>";
 	      								}
 	      							}
 	      							
@@ -878,7 +895,7 @@ if (empty($_SESSION["statusrsib"])){
         	$trans_id_filter = $_SESSION["rsib"] ;
 	        $sql="SELECT count(*) as cnt FROM runsheet_detail WHERE id = '$trans_id_filter' and status = 'LOST'" ;
 	        $res = $mysqli->query($sql);
-	        if($res->num_rows >0){
+	       	if($res->num_rows >0){
 	        	$res->data_seek($row_no);
 	        	$row = $res->fetch_assoc();
 	        	echo "<p>Lost packages ($row[cnt])</p>";	        	
@@ -904,7 +921,7 @@ if (empty($_SESSION["statusrsib"])){
                             <?php 
                             $trans_id_filter = $_SESSION["rsib"] ;
                             $sql="Select id,item,item_type,status,user_created,user_created_at,user_lost,user_lost_at 
-                            from runsheet_detail where id ='$trans_id_filter' and status='LOST' order by user_received_at desc limit 100" ;
+                            from runsheet_detail where id ='$trans_id_filter' and status='LOST' order by user_received_at desc limit 30" ;
                             $res = $mysqli->query($sql);
                             if($res->num_rows >0){
                             	$nb = $res->num_rows;                            	
