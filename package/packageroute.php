@@ -1,7 +1,7 @@
 <?php
 	session_start();
 	if(empty($_POST['track_nb'])){
-		$_SESSION['track_nb_chk']="";
+		$_SESSION['track_nb_chk']="tracking";
 	}
 ?>
 <html>
@@ -88,11 +88,10 @@
     <body>
         <h2 style="color:#DF7401;">PACKAGE SELLER ROUTE SEARCHING</h2>
         <p align="right"><a href="index.php">Click here to go home</a></p>
-		<?php
-			echo $_SESSION['track_nb_chk'];
+		<?php		
 			if ($_SERVER['REQUEST_METHOD']=="POST"){
 				if(isset($_POST['track_nb'])){
-					$_SESSION['track_nb_chk']="";
+					$_SESSION['track_nb_chk']="package";
 				}
 				
 			}
@@ -101,7 +100,7 @@
          Tracking Number <input type="text" name="packg" class="packg" />
          <!--  <input type="button"  id="search" value="search"/> <br/> -->
 		 <?php
-				if(  $_SESSION['track_nb_chk'] != null)
+				if(  $_SESSION['track_nb_chk'] == "package")
 				{
 					echo "<br>Package Number? <input type='checkbox' name='track_nb' checked/> <br/>";
 				}
@@ -133,7 +132,7 @@
 					left join route on route.id = sender.route_id
 					left join address on address.id = contact.address_id ";						
 									
-					if(isset($_POST['track_nb']) &&  !empty($_POST['track_nb'])){
+					if(isset($_SESSION['track_nb_chk']) &&  ($_SESSION['track_nb_chk']=="package")){
 						$query = $query ." where package.external_id='$packg'";//tracking id	
 						//$_SESSION['track_nb_chk'] = "checked";	
 									
@@ -142,7 +141,7 @@
 						$query = $query ." where package.tracking_number='$packg'";//package
 						//$_SESSION['track_nb_chk']= null;
 					}
-			
+					
 					$result = pg_query($query) or die('Query failed: ' . pg_last_error());
 					$nbrows= pg_numrows($result);
 				

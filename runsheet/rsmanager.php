@@ -4,6 +4,9 @@ date_default_timezone_set('Asia/Ho_Chi_Minh');
 if(Empty($fromhub) ){
 	$fromhub='ALL';
 }
+if(Empty($tohub) ){
+	$fromhub='ALL';
+}
 	
 ?>
  <?php
@@ -36,7 +39,6 @@ if(Empty($fromhub) ){
 			}			
 				
 			if ($_SERVER["REQUEST_METHOD"] == "POST") {		
-				echo "Search";
 				if(Empty($_POST["item"])){
 					$item="";
 				}else {
@@ -147,16 +149,8 @@ if(Empty($fromhub) ){
 						default:
 							$date_filter ="";
 					}
-					
-				
+
 				}
-				//echo "<br/>item: " .$item;
-				//echo "<br/>transit id: " .$transId;
-				//echo "<br/>from date: " .$fromdate;
-				//echo "<br/>to date: ".$todate;
-				//echo "<br/>from hub: ".$fromhub;
-				//echo "<br/>to hub: ".$tohub;
-				//echo "<br/>export: ".$expcsv;			
 				
 			}			
 			function test_input($data) {
@@ -427,9 +421,9 @@ if(Empty($fromhub) ){
 			<input type="submit" name="btsearch" value="Search" class="button"><br/> 
 			Runsheet# <a style="margin-left:1px; "></a>
 			<input type="text" name="transid" class="transid" class="txttransid" value="<?php echo $transId;?>"> 
-			Item:  <a style="margin-left:21px; "></a>
+			Item:  <a style="margin-left:17px; "></a>
 			<input type="text" name="item" class="item" value="<?php echo $item;?>" /> 			
-			<input type="submit" name="btcsv" value="CSV" class="button"><br/>
+			<br/>
 			
 			<?php 		
 			
@@ -474,7 +468,7 @@ if(Empty($fromhub) ){
 				}					
 				echo "</select>";
 				echo " RS Status: <a style='margin-left: -24px;'></a> <select name='status' class='combostatus'>";
-				if(isset($status) &&  $status == "ALL"){
+				if(isset($status) &&  $status == "ALL" ){
 					echo "<option value='ALL' selected>ALL</option>";
 				}else{
 					echo "<option value='ALL'>ALL</option>";
@@ -567,6 +561,7 @@ if(Empty($fromhub) ){
                             	$tohub_filter = $tohub;
                             }
                           
+                            echo "<br/> Status: " .$status;
                             switch (trim($status)){
                             	case "ALL":
                             		$date_filter =" and h.user_created_at between '$fromdate_filter' and '$todate_filter' ";
@@ -585,7 +580,9 @@ if(Empty($fromhub) ){
                             		$order_filter=" order by h.user_done_at desc";
                             		break;
                             	default:
-                            		$date_filter ="";
+                            		$fromdate_filter = date_create(date("Y-m-d"))->format('Y-m-d');
+                            		$todate_filter = date_create(date("Y-m-d"))->format('Y-m-d 23:11:59');
+                            		$date_filter =" and h.user_created_at between '$fromdate_filter' and '$todate_filter' ";
                             		$order_filter="";
                             }                            	
                                                         	
@@ -598,10 +595,8 @@ if(Empty($fromhub) ){
 							 WHERE h.id like '%$trans_id_filter%' and h.from_hub like '$frmhub_filter' and h.to_hub like '$tohub_filter'
                             and h.type like '$type_filter' and d.item like '$item_filter' and h.status_rs like '$status_filter' $date_filter 
                             Group by h.id,from_hub,to_hub,type,status_rs,h.user_created,h.user_created_at,h.user_updated,h.user_updated_at,
-                            h.user_dispatch,h.user_dispatch_at,h.user_done,h.user_done_at $order_filter ";
-                           // echo $sql;
-                         	//echo "<br/>".$sql;
-							$res = $mysqli->query($sql);
+                            h.user_dispatch,h.user_dispatch_at,h.user_done,h.user_done_at $order_filter  Limit 100";
+                        	$res = $mysqli->query($sql);
 							//echo "<br/> Data search *******************************";												
 								if($res->num_rows >0){
 									//echo "<br/> View Table:************************";
@@ -626,19 +621,20 @@ if(Empty($fromhub) ){
 										echo "<td>$row[user_done]</td>";
 										echo "<td>$row[user_done_at]</td>";
 										echo "<td>";
+										echo "<a href=?action=CSV&&transId=$row[id]> CSV</a>";
 										if($row["status_rs"]=="PACK"){											
-											echo "<a target = '_blank' href=http://10.19.203.242/lextools/runsheet/rsoutbound.php?transId=$row[id]>Dispatch</a>";
+											echo " <a target = '_blank' href=http://10.19.203.242/lextools/runsheet/rsoutbound.php?transId=$row[id]>Dispatch</a>";
 											//echo "<a target = '_blank' href=http://localhost/lextools/runsheet/rsoutbound.php?transId=$row[id]>Dispatch</a>";
 										}
 										if($row["status_rs"]=="DISPATCH"){										
-											echo "<a target = '_blank' href=http://10.19.203.242/lextools/runsheet/rsinbound.php?transId=$row[id]>Check-In</a>";
+											echo " <a target = '_blank' href=http://10.19.203.242/lextools/runsheet/rsinbound.php?transId=$row[id]>Check-In</a>";
 											//echo "<a target = '_blank' href=http://localhost/lextools/runsheet/rsinbound.php?transId=$row[id]>Check-In</a>";
 										}
 										if($row["status_rs"]=="DONE"){											
-											echo "<a target = '_blank' href=http://10.19.203.242/lextools/runsheet/rsinbound.php?transId=$row[id]>VIEW</a>";
+											echo " <a target = '_blank' href=http://10.19.203.242/lextools/runsheet/rsinbound.php?transId=$row[id]>VIEW</a>";
 											//echo "<a target = '_blank' href=http://localhost/lextools/runsheet/rsinbound.php?transId=$row[id]>VIEW</a>";
 										}
-										echo "  <a href=?action=CSV&&transId=$row[id]> CSV</a>";
+										
 										echo "</td>";
 										echo "</tr>";										
 									}

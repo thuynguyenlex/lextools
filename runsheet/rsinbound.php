@@ -684,8 +684,22 @@ if (empty($_SESSION["statusrsib"])){
       				</div>";
       			}else{
       				echo "<script>beep(1);</script>";      				
+      			}     			 
+      		}
+      		
+      		//DELETE:
+      		if( isset($_GET["action"]) && $_GET["action"]=="delete" && isset($_GET["item"]) && isset($_GET["transId"]) ){
+      			$item_del = $_GET["item"];
+      			$transId_del=$_GET["transId"];
+      			$query ="Delete from runsheet_detail where item ='$item_del' and id ='$transId_del' and Status='RECEIVE MISS SCAN';";
+      			$res = $mysqli->query($query);
+      			if($res == ""){
+      				$sqlError = $mysqli ->error;
+      				$err = 'Can not Delete item:' .$item_del .' error: ' .$sqlError;
+      				Echo "<script>alert('Can not Delete item: $item_del ');</script>";
+      			}else {
+      				echo "<script>beep(1);</script>";
       			}
-      			 
       		}
       	}
       	function test_input($data) {
@@ -736,35 +750,13 @@ if (empty($_SESSION["statusrsib"])){
 			$fromhub =$_SESSION["fromhubrsib"];	
 			echo "value";
 			echo "<option value='$fromhub'  selected>$fromhub</option>";
-			
-			/*
-			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
-				echo "value";
-				$res->data_seek($row_no);
-				$row = $res->fetch_assoc();				
-				if(isset($_SESSION["fromhubrsib"]) &&  $_SESSION["fromhubrsib"] == $row[value]){
-					echo "<option value='$row[value]' selected>$row[value]</option>";
-				}else{
-					echo "<option value='$row[value]'>$row[value]</option>";
-				}
-			}	*/
 			echo "</select>";			
 			echo "		To Hub ";						
 			echo "<select name='tohub' class='comboxhub' disabled>";
 			$tohub =$_SESSION["tohubrsib"];
 			echo "value";
 			echo "<option value='$tohub'  selected>$tohub</option>";
-			/*
-			for ($row_no = $res->num_rows - 1; $row_no >= 0; $row_no--) {
-				echo "value";
-				$res->data_seek($row_no);
-				$row = $res->fetch_assoc();
-							if(isset($_SESSION["tohubrsib"]) &&  $_SESSION["tohubrsib"] == $row[value]){
-					echo "<option value='$row[value]' selected>$row[value]</option>";
-				}else{
-					echo "<option value='$row[value]'>$row[value]</option>";
-				}
-			}*/
+
 			echo "</select>";			
 			?>
 		 </form>	
@@ -801,7 +793,8 @@ if (empty($_SESSION["statusrsib"])){
                              <th scope="col">User Created</th>
                              <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Created At</th>
                              <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received</th>
-                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received At</th>                
+                             <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>User Received At</th>
+							 <th scope="col"><a id="sort-url" href="#" onclick="return sort(this.id, this.textContent)"></a>Action</th>               
                                                   
                             <?php 
                             $trans_id_filter = $_SESSION["rsib"] ;
@@ -825,8 +818,10 @@ if (empty($_SESSION["statusrsib"])){
                             		echo "<td>$row[user_created]</td>";
                             		echo "<td>$row[user_created_at]</td>";
                             		echo "<td>$row[user_received]</td>";
-                            		echo "<td>$row[user_received_at]</td>";                            	
-                            		//echo "<td><a href=?action=Delete&&item=$row[item]&&transId=$row[id]>Delete</a></td>";
+                            		echo "<td>$row[user_received_at]</td>";                          	                            		
+                            		if( $row["status"]=="RECEIVE MISS SCAN"){
+                            			echo "<td><a href=?action=delete&&item=$row[item]&&transId=$row[id]>DELETE</a></td>";
+                            		}
                             		echo "</tr>";
                             	}
                             }
